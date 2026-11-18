@@ -259,12 +259,17 @@ class MainWindow(QMainWindow):
         backend = self.chat.cmb_backend.currentData()
         if backend:
             db.set_cfg("ultimo_backend", backend)
+        prev = db.get_cfg("ultimo_modelo")
         models = backends.list_models(backend)
+        self.chat.cmb_model.blockSignals(True)
         self.chat.cmb_model.clear()
         self.chat.cmb_model.addItems(models or ["(sin modelos)"])
-        prev = db.get_cfg("ultimo_modelo")
+        self.chat.cmb_model.blockSignals(False)
         if prev and prev in (models or []):
             self.chat.cmb_model.setCurrentText(prev)
+        elif models:
+            db.set_cfg("ultimo_modelo", models[0])
+            self.chat.cmb_model.setCurrentText(models[0])
 
     # ---------- chat ----------
     def _send(self, text, attachments):
