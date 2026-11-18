@@ -1,8 +1,8 @@
 """Panel de chat: mensajes, tarjetas contraíbles y composer estilo Devin."""
 import os
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QFont
+from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import (QComboBox, QFrame, QGroupBox, QHBoxLayout,
                                QLabel, QMenu, QPlainTextEdit, QPushButton,
                                QScrollArea, QToolButton, QVBoxLayout, QWidget)
@@ -51,6 +51,54 @@ class TaskCard(QGroupBox):
         self._lbl.setVisible(on)
 
 
+class WaveBar(QWidget):
+    """Barra de onda que se mueve con la amplitud de la voz."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedHeight(26)
+        self._niveles = [0.0] * 48
+        self._cur = 0.0
+        self._activo = False
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._avanzar)
+
+    def start(self):
+        self._activo = True
+        self._niveles = [0.0] * 48
+        self._timer.start(50)
+        self.setVisible(True)
+
+    def stop(self):
+        self._activo = False
+        self._timer.stop()
+        self.setVisible(False)
+
+    def set_level(self, v):
+        self._cur = min(1.0, v)
+
+    def _avanzar(self):
+        self._niveles.append(self._cur)
+        self._niveles.pop(0)
+        self._cur *= 0.75
+        self.update()
+
+    def paintEvent(self, event):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)
+        w, h = self.width(), self.height()
+        n = len(self._niveles)
+        bw = max(2, w // n - 2)
+        p.setPen(Qt.NoPen)
+        for i, lv in enumerate(self._niveles):
+            bh = max(2, int(lv * (h - 4)))
+            x = i * (bw + 2)
+            alfa = 60 + int(195 * (i / n))
+            p.setBrush(QColor(46, 127, 184, alfa))
+            p.drawRoundedRect(x, (h - bh) // 2, bw, bh, bw / 2, bw / 2)
+        p.end()
+
+
 class ChatPanel(QWidget):
     send_requested = Signal(str, list)
     stop_requested = Signal()
@@ -93,6 +141,10 @@ class ChatPanel(QWidget):
         self._chips.setStyleSheet("color:#7ab3e0;font-size:11px;")
         self._chips.setVisible(False)
         lay.addWidget(self._chips)
+
+        self.wave = WaveBar()
+        self.wave.setVisible(False)
+        lay.addWidget(self.wave)
 
         self.input = QPlainTextEdit()
         self.input.setPlaceholderText(
@@ -200,18 +252,25 @@ class ChatPanel(QWidget):
                 engine = self.cmb_voz.currentText().lower()
                 self._voz = VoiceWorker(engine)
                 self._voz.text.connect(self._dictar)
+                self._voz.final.connect(self._dictar)
+                self._voz.level.connect(self.wave.set_level)
                 self._voz.error.connect(self._voz_error)
+                self._voz.finished.connect(self._voz_termino)
                 self._voz.finished.connect(self._voz.deleteLater)
                 self._voz.start()
-                self.add_system("🎤 Escuchando… habla y se dicta aquí. "
-                                "Toca 🎤 otra vez para parar.")
+                self.wave.start()
             elif self._voz:
-                voz, self._voz = self._voz, None
-                voz.stop()
-                voz.wait(3000)  # evita destruir el hilo en marcha
+                self._voz.stop()  # _voz_termino limpia al finalizar
+            else:
+                self.wave.stop()
         except Exception as e:
             consola.log_error("voz", repr(e))
             self.add_system("🎤 Error: " + str(e))
+
+    def _voz_termino(self):
+        self._voz = None
+        self.wave.stop()
+        self.btn_mic.setChecked(False)
 
     def _dictar(self, texto):
         self.input.insertPlainText(texto + " ")
@@ -219,11 +278,10 @@ class ChatPanel(QWidget):
     def _voz_error(self, err):
         self.add_system("🎤 " + err)
         consola.log_error("voz", err)
-        self.btn_mic.setChecked(False)
         if self._voz:
-            voz, self._voz = self._voz, None
-            voz.stop()
-            voz.wait(3000)
+            self._voz.stop()
+        else:
+            self._voz_termino()
 
     def add_user(self, text):
         self._vbox.addWidget(Bubble("Tú: " + text, "user"))
