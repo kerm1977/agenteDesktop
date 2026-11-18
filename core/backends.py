@@ -2,6 +2,7 @@
 import http.client
 import json
 import os
+import socket
 import urllib.parse
 import urllib.request
 
@@ -32,13 +33,23 @@ _active_resp = None
 def abort_stream():
     """Cierra conexión/respuesta activa para desbloquear chat_stream."""
     global _active_conn, _active_resp
-    for obj in (_active_resp, _active_conn):
-        if obj is not None:
-            try:
-                obj.close()
-            except Exception:
-                pass
+    conn = _active_conn
     _active_resp = _active_conn = None
+    if _active_resp is not None:
+        try:
+            _active_resp.close()
+        except Exception:
+            pass
+    if conn is not None:
+        try:
+            if conn.sock is not None:
+                conn.sock.shutdown(socket.SHUT_RDWR)
+        except Exception:
+            pass
+        try:
+            conn.close()
+        except Exception:
+            pass
 
 
 def _open_stream(cfg, path, payload):

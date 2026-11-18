@@ -335,6 +335,14 @@ class ChatPanel(QWidget):
         self._vbox.addWidget(Bubble("Tú: " + text, "user"))
         self._scroll_down()
 
+    def add_rule(self, text):
+        lbl = QLabel("— " + text + " —")
+        lbl.setAlignment(Qt.AlignCenter)
+        lbl.setStyleSheet("color:#6a6f7a;font-size:11px;font-style:italic;"
+                          "padding:2px;")
+        self._vbox.addWidget(lbl)
+        self._scroll_down()
+
     def add_system(self, text):
         self._vbox.addWidget(Bubble(text, "system"))
         self._scroll_down()

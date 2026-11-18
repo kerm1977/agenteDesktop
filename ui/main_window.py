@@ -108,6 +108,12 @@ class MainWindow(QMainWindow):
         self.chat.attach_requested.connect(self._attach)
         self.chat.cmb_model.currentTextChanged.connect(
             self.models._select_model)
+        self.chat.cmb_model.currentTextChanged.connect(self._model_rule)
+        self._last_text = ""
+
+    def _model_rule(self, text):
+        if text and not text.startswith("("):
+            self.chat.add_rule("Pensando con " + text)
 
     # ---------- proyecto ----------
     def set_root(self, root):
@@ -218,6 +224,7 @@ class MainWindow(QMainWindow):
         if attachments:
             msg += "\n\nAdjuntos (copiados en adjuntos/):\n" + "\n".join(
                 "- " + os.path.relpath(p, self._root) for p in attachments)
+        self._last_text = text
         self.chat.add_user(text or "(adjuntos)")
         self.models.save_prefs(model)
         system = prompts.build_system(self.editor.context(), self._root,
@@ -242,6 +249,9 @@ class MainWindow(QMainWindow):
     def _stop(self):
         if self._worker:
             self._worker.request_stop()
+        self.chat.add_system("El usuario detuvo la respuesta.")
+        if self._last_text and not self.chat.input.toPlainText().strip():
+            self.chat.input.setPlainText(self._last_text)
 
     def _chat_done(self, text):
         self.chat.end_stream()
