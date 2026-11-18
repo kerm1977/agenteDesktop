@@ -24,8 +24,8 @@ class TreePanel(QWidget):
             self._view.hideColumn(col)
         self._view.setAnimated(False)
         self._view.setStyleSheet(
-            "QTreeView{background:#1e1e1e;color:#d4d4d4;border:none;}"
-            "QTreeView::item:selected{background:#094771;}")
+            "QTreeView{background:#232329;color:#dcdce2;border:none;}"
+            "QTreeView::item:selected{background:#2f6ea3;}")
         self._view.doubleClicked.connect(self._open)
         lay.addWidget(self._view)
         self.root = None

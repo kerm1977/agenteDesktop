@@ -12,19 +12,31 @@ from ui.chat_panel import ChatPanel
 from ui.console_panel import ConsolePanel
 from ui.editor_panel import EditorPanel
 from ui.models_panel import ModelsPanel
+from ui.nuevo_proyecto import NuevoProyectoDialog, crear_proyecto
 from ui.tree_panel import TreePanel
 from ui.worker import ChatWorker
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-DARK = ("QMainWindow,QWidget{background:#131314;color:#d4d4d4;}"
-        "QToolBar{background:#1b1b1d;border:none;spacing:4px;padding:4px;}"
-        "QToolBar QToolButton{background:transparent;color:#ccc;"
+DARK = ("QMainWindow,QWidget{background:#202024;color:#e2e2e6;}"
+        "QToolBar{background:#26262b;border:none;spacing:4px;padding:4px;}"
+        "QToolBar QToolButton{background:transparent;color:#d0d0d6;"
         "border-radius:6px;padding:5px 8px;}"
-        "QToolBar QToolButton:hover{background:#2a2a2e;}"
-        "QToolBar QToolButton:checked{background:#0e639c;color:#fff;}"
-        "QLabel{color:#ccc;}"
-        "QSplitter::handle{background:#232326;}")
+        "QToolBar QToolButton:hover{background:#34343c;}"
+        "QToolBar QToolButton:checked{background:#2e7fb8;color:#fff;}"
+        "QLabel{color:#d4d4da;}"
+        "QSplitter::handle{background:#303038;}"
+        "QScrollBar:vertical{background:transparent;width:10px;margin:2px;}"
+        "QScrollBar::handle:vertical{background:#45454d;border-radius:5px;"
+        "min-height:30px;}"
+        "QScrollBar::handle:vertical:hover{background:#5a5a66;}"
+        "QScrollBar::add-line:vertical,QScrollBar::sub-line:vertical{height:0;}"
+        "QScrollBar:horizontal{background:transparent;height:10px;margin:2px;}"
+        "QScrollBar::handle:horizontal{background:#45454d;border-radius:5px;"
+        "min-width:30px;}"
+        "QScrollBar::handle:horizontal:hover{background:#5a5a66;}"
+        "QScrollBar::add-line:horizontal,QScrollBar::sub-line:horizontal"
+        "{width:0;}")
 
 
 class MainWindow(QMainWindow):
@@ -104,6 +116,17 @@ class MainWindow(QMainWindow):
                                              self._root)
         if d:
             self.set_root(d)
+
+    def _nuevo_proyecto(self):
+        base = os.path.join(os.path.expanduser("~"), "proyectos")
+        os.makedirs(base, exist_ok=True)
+        dlg = NuevoProyectoDialog(base, self)
+        if dlg.exec() and dlg.ruta:
+            ruta = crear_proyecto(dlg.ruta, dlg._plantilla.currentText())
+            self.set_root(ruta)
+            self._stack.setCurrentIndex(0)
+            self.chat.add_system("Proyecto creado en " + ruta)
+            consola.log_info("proyecto", "creado " + ruta)
 
     def _attach(self, kind):
         dest = os.path.join(self._root, "adjuntos")

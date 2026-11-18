@@ -1,5 +1,5 @@
 {
- "version": "0.1.0",
+ "version": "0.1.1",
  "files": {
   ".gitignore": "72b220c32ea75bfcc5158a31dfb6d7c6bf149d1ce778dee218c1ad969dc45db6",
   "agente.db": "d7f0ee0627b9dac2c0cbe8b96885e1400abb6309781e734d55791d7bd684054d",
@@ -21,14 +21,15 @@
   "core/tools.py": "f51d8d354bda9830a32551e3469e22439105f81338556ef808dd1e821f8c57e6",
   "core/updater.py": "99269edb98de85aab626415d3af868213149f353a11a74d8b491508888b48478",
   "core/__init__.py": "43e1ecfd357e54391a7755088e876aced42c99bafcd2e2157ae9c8525dc1e5f7",
-  "ui/barras.py": "d1fc4a184561d01263157cc801e9420f588b6cfd05664d7055fad8eaf51e3d37",
-  "ui/chat_panel.py": "1e9778f50bf7611c5baa30cd92d94cb9fb15786a2cbf74b9f9d73a449a822f59",
-  "ui/console_panel.py": "64eb9dccd11c83aec89f214bd2efbed8030fa79ef07fcb440df946c21c4eeb0f",
-  "ui/editor_panel.py": "10cb655b3976fc3511b741eab3be78dc27c1bcf09ea6301aa6947ef89d76b56a",
-  "ui/main_window.py": "bbb1c6c83d09449d62ffd7f7534c80154ed2e19413fc497def3071a6141525b9",
-  "ui/models_panel.py": "99e1121b448488c17a7e58cab7c3648cf2b7101032886f37cd995a0ae98d9a60",
+  "ui/barras.py": "af6b0a4408d8c9453225a431bcc785a7396f5d25fe70fde7f27f6eff0a5f6483",
+  "ui/chat_panel.py": "7e7a2808e8bc845b3122924c79804cb23ffb1c6358addb0be4acc2dc9a03c779",
+  "ui/console_panel.py": "941bcd9e0d5990cfa0e8004ba5a92e3962adc2b66c522252bba15a02a555a060",
+  "ui/editor_panel.py": "88ae4ed7d4a9049db9840cf82db1ecef46382c39f228f266e828b0bf18ade9b3",
+  "ui/main_window.py": "858dbd802fb96c727483046b84f6f2ed784510b3b25d1e0c76c8e6acc74fadb7",
+  "ui/models_panel.py": "52a8ca17786f975ad64699b6f8478ea7c387c92083190d4d9c51968f04c90eac",
+  "ui/nuevo_proyecto.py": "ab307800e57d599e405567dd9421c1ce5c70515afb1f965a494cac26da17f2b8",
   "ui/ota_ui.py": "bd06586cf6c151c768e43168236b301151b7636d2efe8fe53034f25374db8224",
-  "ui/tree_panel.py": "4a9245529b405e9019cd018fc2465bce5e258134e545a460fd8a6dd413f30c73",
+  "ui/tree_panel.py": "fd8226abb0890230cdb8937f8b7ab916fe8836e44803f69373558bfd98b0d75e",
   "ui/worker.py": "9bf82b3ddc273c0b651043b8a59b3f8b07d395973648ed8d140b2745ee0461be",
   "ui/__init__.py": "f745e33402ff264da36f04edc4da8d24bff6ee974598316b71cf0042cb4686cd"
  }

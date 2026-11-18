@@ -51,6 +51,10 @@ def build_toolbar(win):
     tb.setMovable(False)
     win.addToolBar(tb)
 
+    act_new = QAction("➕ Nuevo proyecto", win)
+    act_new.triggered.connect(win._nuevo_proyecto)
+    tb.addAction(act_new)
+
     act_dir = QAction("📂 Abrir proyecto", win)
     act_dir.triggered.connect(win._pick_dir)
     tb.addAction(act_dir)

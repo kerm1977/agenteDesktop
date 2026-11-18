@@ -22,14 +22,14 @@ class ConsolePanel(QWidget):
         f.setStyleHint(QFont.Monospace)
         self._view.setFont(f)
         self._view.setStyleSheet(
-            "QPlainTextEdit{background:#141414;color:#d4d4d4;border:none;}")
+            "QPlainTextEdit{background:#1d1d21;color:#dcdce2;border:none;}")
         lay.addWidget(self._view, 1)
 
         row = QHBoxLayout()
         self.btn_copy = QPushButton("Copiar")
         self.btn_clear = QPushButton("Limpiar")
         for b in (self.btn_copy, self.btn_clear):
-            b.setStyleSheet("QPushButton{background:#3e3e42;color:#ddd;"
+            b.setStyleSheet("QPushButton{background:#34343c;color:#ddd;"
                             "border:none;border-radius:4px;padding:4px 12px;}")
         row.addStretch(1)
         row.addWidget(self.btn_copy)

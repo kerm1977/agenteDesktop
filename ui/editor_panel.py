@@ -65,7 +65,7 @@ class CodeEditor(QPlainTextEdit):
         font.setStyleHint(QFont.Monospace)
         self.setFont(font)
         self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
-        self.setStyleSheet("QPlainTextEdit{background:#1e1e1e;color:#d4d4d4;"
+        self.setStyleSheet("QPlainTextEdit{background:#242429;color:#dcdce2;"
                            "border:none;}")
         self.blockCountChanged.connect(self._update_line_area_width)
         self.updateRequest.connect(self._update_line_area)
@@ -95,7 +95,7 @@ class CodeEditor(QPlainTextEdit):
 
     def paint_line_numbers(self, event):
         painter = QPainter(self._line_area)
-        painter.fillRect(event.rect(), QColor("#252526"))
+        painter.fillRect(event.rect(), QColor("#2a2a30"))
         block = self.firstVisibleBlock()
         num = block.blockNumber()
         top = int(self.blockBoundingGeometry(block)
@@ -153,7 +153,7 @@ class EditorPanel(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
         self._label = QLabel("  Sin archivo — abre uno en el árbol")
-        self._label.setStyleSheet("background:#2d2d30;color:#ccc;padding:4px;")
+        self._label.setStyleSheet("background:#2c2c32;color:#d4d4da;padding:4px;")
         self.editor = CodeEditor()
         lay.addWidget(self._label)
         lay.addWidget(self.editor, 1)

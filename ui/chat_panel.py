@@ -13,8 +13,8 @@ class Bubble(QLabel):
         super().__init__(text)
         self.setWordWrap(True)
         self.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        color = {"user": "#1f4b7a", "assistant": "#232327",
-                 "system": "#3d3416"}.get(kind, "#232327")
+        color = {"user": "#2d629b", "assistant": "#2b2b31",
+                 "system": "#4a4020"}.get(kind, "#2b2b31")
         self.setStyleSheet(f"QLabel{{background:{color};color:#e8e8e8;"
                            "border-radius:10px;padding:10px 12px;}}")
 
@@ -37,8 +37,8 @@ class TaskCard(QGroupBox):
         self._lbl.setVisible(False)
         lay.addWidget(self._lbl)
         self.setStyleSheet(
-            "QGroupBox{background:#1f1f22;color:#9cdcfe;"
-            "border:1px solid #333338;border-radius:8px;"
+            "QGroupBox{background:#28282e;color:#9cdcfe;"
+            "border:1px solid #3a3a44;border-radius:8px;"
             "margin-top:12px;padding-top:16px;}"
             "QGroupBox::title{subcontrol-origin:margin;left:10px;}")
         self._title = title
@@ -63,7 +63,7 @@ class ChatPanel(QWidget):
 
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
-        self._scroll.setStyleSheet("QScrollArea{border:none;background:#131314;}")
+        self._scroll.setStyleSheet("QScrollArea{border:none;background:#1b1b1f;}")
         self._box = QWidget()
         self._vbox = QVBoxLayout(self._box)
         self._vbox.setAlignment(Qt.AlignTop)
@@ -81,7 +81,7 @@ class ChatPanel(QWidget):
     def _build_composer(self):
         frame = QFrame()
         frame.setStyleSheet(
-            "QFrame{background:#1e1e20;border:1px solid #333338;"
+            "QFrame{background:#26262b;border:1px solid #3a3a44;"
             "border-radius:12px;margin:8px;}")
         lay = QVBoxLayout(frame)
         lay.setContentsMargins(10, 8, 10, 8)
@@ -106,11 +106,11 @@ class ChatPanel(QWidget):
         self.btn_attach.setText("＋")
         self.btn_attach.setPopupMode(QToolButton.InstantPopup)
         self.btn_attach.setStyleSheet(
-            "QToolButton{background:#2a2a2e;color:#ddd;border:1px solid #3a3a40;"
+            "QToolButton{background:#303038;color:#ddd;border:1px solid #42424c;"
             "border-radius:12px;padding:4px 10px;font-size:14px;}")
         menu = QMenu(self.btn_attach)
-        menu.setStyleSheet("QMenu{background:#252528;color:#ddd;"
-                           "border:1px solid #3a3a40;}")
+        menu.setStyleSheet("QMenu{background:#2a2a30;color:#ddd;"
+                           "border:1px solid #42424c;}")
         menu.addAction("📄 Adjuntar archivos",
                        lambda: self.attach_requested.emit("files"))
         menu.addAction("📁 Adjuntar carpeta",
@@ -122,8 +122,8 @@ class ChatPanel(QWidget):
         self.cmb_model = QComboBox()
         self.cmb_model.setMinimumWidth(160)
         for c in (self.cmb_backend, self.cmb_model):
-            c.setStyleSheet("QComboBox{background:#2a2a2e;color:#ddd;"
-                            "border:1px solid #3a3a40;border-radius:6px;"
+            c.setStyleSheet("QComboBox{background:#303038;color:#ddd;"
+                            "border:1px solid #42424c;border-radius:6px;"
                             "padding:3px 8px;}")
         row.addWidget(self.cmb_backend)
         row.addWidget(self.cmb_model)
@@ -132,14 +132,14 @@ class ChatPanel(QWidget):
         self.btn_stop = QPushButton("■")
         self.btn_stop.setEnabled(False)
         self.btn_stop.setStyleSheet(
-            "QPushButton{background:#5a2d2d;color:#eee;border:none;"
+            "QPushButton{background:#6e3636;color:#eee;border:none;"
             "border-radius:12px;padding:5px 12px;}"
-            "QPushButton:disabled{background:#2a2a2e;color:#666;}")
+            "QPushButton:disabled{background:#303038;color:#777;}")
         self.btn_send = QPushButton("➤")
         self.btn_send.setStyleSheet(
-            "QPushButton{background:#0e639c;color:white;border:none;"
+            "QPushButton{background:#2e7fb8;color:white;border:none;"
             "border-radius:12px;padding:5px 14px;font-size:14px;}"
-            "QPushButton:disabled{background:#2a2a2e;color:#666;}")
+            "QPushButton:disabled{background:#303038;color:#777;}")
         row.addWidget(self.btn_stop)
         row.addWidget(self.btn_send)
         lay.addLayout(row)
