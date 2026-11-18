@@ -123,7 +123,7 @@ class MainWindow(QMainWindow):
             self.set_root(d)
             self._stack.setCurrentIndex(0)
             self.editor._label.setText(
-                f"  📁 {os.path.basename(d)}  ›  (elige un archivo del árbol)")
+                f"  ▸ {os.path.basename(d)}  ›  (elige un archivo del árbol)")
             self.chat.add_system("Proyecto abierto: " + d)
 
     def _nuevo_proyecto(self):
@@ -165,7 +165,7 @@ class MainWindow(QMainWindow):
                 self.proyecto_tree.set_root(ultimo)
                 self.editor.set_root(ultimo)
                 self.editor._label.setText(
-                    f"  📁 {os.path.basename(ultimo)}  ›  "
+                    f"  ▸ {os.path.basename(ultimo)}  ›  "
                     "(elige un archivo del árbol)")
 
     def _toggle_self_mode(self, on):

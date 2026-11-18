@@ -157,7 +157,7 @@ class ChatPanel(QWidget):
 
         row = QHBoxLayout()
         self.btn_attach = QToolButton()
-        self.btn_attach.setText("＋")
+        self.btn_attach.setText("+")
         self.btn_attach.setPopupMode(QToolButton.InstantPopup)
         self.btn_attach.setStyleSheet(
             "QToolButton{background:#303038;color:#ddd;border:1px solid #42424c;"
@@ -165,9 +165,9 @@ class ChatPanel(QWidget):
         menu = QMenu(self.btn_attach)
         menu.setStyleSheet("QMenu{background:#2a2a30;color:#ddd;"
                            "border:1px solid #42424c;}")
-        menu.addAction("📄 Adjuntar archivos",
+        menu.addAction("Adjuntar archivos",
                        lambda: self.attach_requested.emit("files"))
-        menu.addAction("📁 Adjuntar carpeta",
+        menu.addAction("Adjuntar carpeta",
                        lambda: self.attach_requested.emit("folder"))
         self.btn_attach.setMenu(menu)
         row.addWidget(self.btn_attach)
@@ -192,7 +192,7 @@ class ChatPanel(QWidget):
             "border:1px solid #42424c;border-radius:6px;"
             "padding:3px 8px;}")
         row.addWidget(self.cmb_voz)
-        self.btn_mic = QPushButton("🎤")
+        self.btn_mic = QPushButton("●")
         self.btn_mic.setToolTip("Dictar por voz (es-ES)")
         self.btn_mic.setCheckable(True)
         self.btn_mic.setStyleSheet(
@@ -209,7 +209,7 @@ class ChatPanel(QWidget):
             "QPushButton{background:#6e3636;color:#eee;border:none;"
             "border-radius:12px;padding:5px 12px;}"
             "QPushButton:disabled{background:#303038;color:#777;}")
-        self.btn_send = QPushButton("➤")
+        self.btn_send = QPushButton("▶")
         self.btn_send.setStyleSheet(
             "QPushButton{background:#2e7fb8;color:white;border:none;"
             "border-radius:12px;padding:5px 14px;font-size:14px;}"
@@ -223,7 +223,7 @@ class ChatPanel(QWidget):
     def add_attachment(self, path):
         self._attachments.append(path)
         names = [os.path.basename(p) for p in self._attachments]
-        self._chips.setText("📎 " + "  ·  ".join(names))
+        self._chips.setText("▪ " + "  ·  ".join(names))
         self._chips.setVisible(True)
 
     # ---------- mensajes ----------
@@ -266,7 +266,7 @@ class ChatPanel(QWidget):
                     self._voz.stop()  # _voz_termino limpia al finalizar
         except Exception as e:
             consola.log_error("voz", repr(e))
-            self.add_system("🎤 Error: " + str(e))
+            self.add_system("Voz — error: " + str(e))
 
     def _voz_termino(self):
         self._voz = None
@@ -277,7 +277,7 @@ class ChatPanel(QWidget):
         self.input.insertPlainText(texto + " ")
 
     def _voz_error(self, err):
-        self.add_system("🎤 " + err)
+        self.add_system("Voz: " + err)
         consola.log_error("voz", err)
         if self._voz:
             self._voz.stop()

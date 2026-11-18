@@ -94,7 +94,7 @@ class ModelRow(QFrame):
             "font-size:14px;color:"
             + ("#4ec9b0" if compat else "#e06c60") + ";")
         top.addWidget(self._badge)
-        self.btn = QPushButton("⬇ Descargar")
+        self.btn = QPushButton("Descargar")
         self.btn.setStyleSheet("font-size:12px;padding:5px 12px;"
                                "background:#2e7fb8;")
         self.btn.clicked.connect(
@@ -129,7 +129,7 @@ class ModelRow(QFrame):
         super().mousePressEvent(event)
 
     def set_installed(self):
-        self.btn.setText("✔ Instalado")
+        self.btn.setText("Instalado")
         self.btn.setStyleSheet("font-size:12px;padding:5px 12px;"
                                "background:#234d35;color:#7fdca8;")
         self.btn.setEnabled(False)
@@ -159,7 +159,7 @@ class ModelsPanel(QWidget):
         lay.addLayout(row)
 
         self._buscar = QLineEdit()
-        self._buscar.setPlaceholderText("🔍 Buscar modelos gratuitos…")
+        self._buscar.setPlaceholderText("Buscar modelos gratuitos…")
         self._buscar.textChanged.connect(self._render_catalogo)
         lay.addWidget(self._buscar)
 
@@ -196,7 +196,7 @@ class ModelsPanel(QWidget):
         lay.addWidget(cfg)
 
         row2 = QHBoxLayout()
-        btn_dir = QPushButton("📁 Carpeta")
+        btn_dir = QPushButton("Carpeta")
         btn_dir.setStyleSheet("background:#303038;")
         btn_dir.clicked.connect(
             lambda: QDesktopServices.openUrl(

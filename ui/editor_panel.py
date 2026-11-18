@@ -173,7 +173,7 @@ class EditorPanel(QWidget):
         if root and os.path.normcase(path).startswith(
                 os.path.normcase(root + os.sep)):
             rel = os.path.relpath(path, root)
-            return f"📁 {os.path.basename(root)}  ›  {rel.replace(os.sep, ' › ')}"
+            return f"▸ {os.path.basename(root)}  ›  {rel.replace(os.sep, ' › ')}"
         return "  " + path
 
     def context(self):
