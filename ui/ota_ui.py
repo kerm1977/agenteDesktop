@@ -19,8 +19,8 @@ def check_and_prompt(parent, chat, manual=False):
         if manual:
             if res.get("sin_repo"):
                 chat.add_system(
-                    "El repo 'agente-desktop' aún no existe en GitHub: créalo "
-                    "desde la tarjeta de Devin y el auto-updater quedará listo.")
+                    "El repo de la app aún no existe o es privado en GitHub; "
+                    "publícalo para activar el auto-updater.")
             else:
                 chat.add_system("Sin conexión al repositorio de "
                                 "actualizaciones.")
