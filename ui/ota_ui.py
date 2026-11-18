@@ -17,7 +17,13 @@ def check_and_prompt(parent, chat, manual=False):
     if not res["ok"]:
         consola.log_error("ota", res["error"])
         if manual:
-            chat.add_system("Sin conexión al repositorio de actualizaciones.")
+            if res.get("sin_repo"):
+                chat.add_system(
+                    "El repo 'agente-desktop' aún no existe en GitHub: créalo "
+                    "desde la tarjeta de Devin y el auto-updater quedará listo.")
+            else:
+                chat.add_system("Sin conexión al repositorio de "
+                                "actualizaciones.")
         return
     if not res["archivos"]:
         if manual:

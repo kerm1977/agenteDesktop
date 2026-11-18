@@ -38,6 +38,11 @@ def check_update(timeout=10):
     try:
         with urllib.request.urlopen(MANIFEST_URL, timeout=timeout) as r:
             manifest = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        if e.code == 404:
+            return {"ok": False, "sin_repo": True,
+                    "error": "repositorio aún no publicado en GitHub"}
+        return {"ok": False, "error": f"HTTP {e.code}"}
     except Exception as e:
         return {"ok": False, "error": str(e)}
     remote_v = manifest.get("version", "?")
