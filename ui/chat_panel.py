@@ -148,7 +148,7 @@ class ChatPanel(QWidget):
 
         self.input = QPlainTextEdit()
         self.input.setPlaceholderText(
-            "Ordena algo al agente… (Ctrl+Enter envía)")
+            "Ordena algo al agente… (Enter envía, Shift+Enter salta línea)")
         self.input.setMaximumHeight(90)
         self.input.setStyleSheet(
             "QPlainTextEdit{background:transparent;color:#e8e8e8;"
@@ -236,7 +236,7 @@ class ChatPanel(QWidget):
         from PySide6.QtCore import QEvent
         if obj is self.input and event.type() == QEvent.KeyPress:
             if (event.key() in (Qt.Key_Return, Qt.Key_Enter)
-                    and event.modifiers() & Qt.ControlModifier):
+                    and not event.modifiers() & Qt.ShiftModifier):
                 self._emit_send()
                 return True
         return super().eventFilter(obj, event)
