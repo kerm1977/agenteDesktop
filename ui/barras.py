@@ -49,7 +49,7 @@ def build_rail(win):
     spacer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
     rail.addWidget(spacer)
     act_hw = QAction(iconos.icon("monitor", 22), "", win)
-    act_hw.setToolTip("Revisar requerimientos del equipo")
+    act_hw.setToolTip("Analizar equipo (especificaciones completas)")
     act_hw.triggered.connect(win._scan_hw)
     act_hw.triggered.connect(lambda _c: _ev("Equipo")())
     rail.addAction(act_hw)

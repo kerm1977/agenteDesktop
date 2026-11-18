@@ -28,6 +28,21 @@ def init():
             ts REAL, role TEXT, content TEXT)""")
         con.execute("""CREATE TABLE IF NOT EXISTS model_bench(
             model TEXT PRIMARY KEY, ok INTEGER, ms INTEGER, ts REAL)""")
+        con.execute("""CREATE TABLE IF NOT EXISTS config(
+            k TEXT PRIMARY KEY, v TEXT)""")
+
+
+# ---------- configuración persistente ----------
+def get_cfg(k, default=None):
+    with _conn() as con:
+        row = con.execute("SELECT v FROM config WHERE k=?", (k,)
+                          ).fetchone()
+    return row["v"] if row else default
+
+
+def set_cfg(k, v):
+    with _conn() as con:
+        con.execute("INSERT OR REPLACE INTO config VALUES(?,?)", (k, str(v)))
 
 
 # ---------- preferencias por modelo ----------

@@ -4,13 +4,14 @@ import shutil
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (QDockWidget, QFileDialog, QMainWindow,
-                               QSplitter, QStackedWidget)
+                               QMessageBox, QSplitter, QStackedWidget)
 
 from core import backends, consola, db, memoria, ollama, prompts
 from ui import barras, ota_ui
 from ui.chat_panel import ChatPanel
 from ui.console_panel import ConsolePanel
 from ui.editor_panel import EditorPanel
+from ui.equipo_dialog import EquipoDialog
 from ui.models_panel import ModelsPanel
 from ui.nuevo_proyecto import NuevoProyectoDialog, crear_proyecto
 from ui.tree_panel import TreePanel
@@ -49,6 +50,8 @@ class MainWindow(QMainWindow):
         self._messages = []
         self._self_mode = False
         self._root = os.getcwd()
+        self._data_dir = os.path.join(os.path.expanduser("~"),
+                                      "Downloads", "agente-desktop")
 
         self.tree = TreePanel()
         self.models = ModelsPanel()
@@ -84,12 +87,28 @@ class MainWindow(QMainWindow):
         self._wire()
 
         QTimer.singleShot(600, self._check_ollama)
+        QTimer.singleShot(900, self._ask_perm_descargas)
         QTimer.singleShot(2500, lambda: ota_ui.check_and_prompt(
             self, self.chat))
 
+    def _ask_perm_descargas(self):
+        """Pide una sola vez permiso para guardar en Descargas."""
+        if db.get_cfg("perm_descargas") is not None:
+            return
+        ans = QMessageBox.question(
+            self, "Permiso de almacenamiento",
+            "¿Permitir que el agente guarde adjuntos y proyectos en tu "
+            "carpeta Descargas?\n\n" + self._data_dir)
+        db.set_cfg("perm_descargas",
+                   "1" if ans == QMessageBox.Yes else "0")
+        os.makedirs(self._data_dir, exist_ok=True)
+
+    def _equipo_info(self):
+        EquipoDialog(self).exec()
+        self.models.scan_hardware()  # refresca compatibilidad del catálogo
+
     def _scan_hw(self):
-        self._stack.setCurrentIndex(1)
-        self.models.scan_hardware()
+        self._equipo_info()
 
     def _fill_backends(self):
         for key, cfg in backends.BACKENDS.items():
@@ -147,7 +166,7 @@ class MainWindow(QMainWindow):
             self.chat.add_system("Proyecto abierto: " + d)
 
     def _nuevo_proyecto(self):
-        base = os.path.join(os.path.expanduser("~"), "proyectos")
+        base = os.path.join(self._data_dir, "proyectos")
         os.makedirs(base, exist_ok=True)
         dlg = NuevoProyectoDialog(base, self)
         if dlg.exec() and dlg.ruta:
@@ -158,7 +177,7 @@ class MainWindow(QMainWindow):
             consola.log_info("proyecto", "creado " + ruta)
 
     def _attach(self, kind):
-        dest = os.path.join(self._root, "adjuntos")
+        dest = os.path.join(self._data_dir, "adjuntos")
         os.makedirs(dest, exist_ok=True)
         if kind == "files":
             paths, _ = QFileDialog.getOpenFileNames(self, "Adjuntar archivos")
