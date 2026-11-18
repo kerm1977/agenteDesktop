@@ -2,7 +2,7 @@
 import os
 import subprocess
 
-from core import memoria
+from core import db, memoria
 
 MAX_READ = 20000
 _DENY = ("format ", "del /s", "rd /s", "rmdir /s", "shutdown", "reg ",
@@ -56,10 +56,24 @@ def run_tool(name, args, root):
         memoria.invalidate(root)
         return "append_file " + args["path"], f"+{len(args.get('content', ''))} caracteres"
     if name == "create_dir":
-        path = _safe(root, args["path"])
+        p = args["path"]
+        if os.path.isabs(p):
+            if db.get_cfg("perm_admin") != "1":
+                raise ValueError(
+                    "ruta absoluta sin permiso de administrador "
+                    "(actívalo una vez en la app)")
+            path = p
+        else:
+            path = _safe(root, p)
         os.makedirs(path, exist_ok=True)
         memoria.invalidate(root)
-        return "create_dir " + args["path"], "ok"
+        return "create_dir " + p, "creada: " + path
+    if name == "open_dir":
+        p = args["path"]
+        full = p if os.path.isabs(p) else _safe(root, p)
+        if not os.path.isdir(full):
+            raise ValueError("no existe la carpeta: " + p)
+        return "open_dir " + p, "@OPEN:" + full
     if name == "search_files":
         needle = args.get("text", "")
         hits = []
@@ -110,14 +124,20 @@ TOOLS_DOC = """Tienes herramientas para actuar sobre el proyecto. Úsalas en blo
 
 Herramientas: list_dir{path}, read_file{path}, write_file{path,content},
 edit_file{path,old,new}, append_file{path,content}, create_dir{path},
-search_files{text}, project_map{}, run_command{cmd} (dentro del proyecto),
+search_files{text}, project_map{}, open_dir{path} (abre una carpeta como
+raíz del editor/árbol), run_command{cmd} (dentro del proyecto),
 sys_command{cmd,cwd} (cualquier comando del sistema operativo: crear
 carpetas fuera del proyecto, abrir programas, instalar/desinstalar,
 gestionar archivos del equipo; funciona en Windows y Linux).
+OJO: el contenido del bloque tool debe ser JSON válido:
+{"name": "sys_command", "args": {"cmd": "mkdir ruta"}} — nunca
+`sys_command{cmd=...}`.
 
 ERES UN AGENTE REAL del sistema operativo: si el usuario pide crear una
 carpeta, abrir algo, instalar/desinstalar un programa o cualquier acción
 en su equipo, usa sys_command — nunca respondas que no puedes hacerlo.
+Al crear/abrir un directorio de trabajo nuevo, usa open_dir para que la
+app lo muestre como raíz en el árbol y el editor.
 
 Modo de trabajo inteligente:
 - Si no conoces la estructura, PRIMERO usa project_map; no leas todo el proyecto.

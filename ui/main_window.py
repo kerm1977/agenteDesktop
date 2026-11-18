@@ -93,15 +93,20 @@ class MainWindow(QMainWindow):
             self, self.chat))
 
     def _ask_perm_descargas(self):
-        """Pide una sola vez permiso para guardar en Descargas."""
-        if db.get_cfg("perm_descargas") is not None:
+        """Pide UNA vez: guardar en Descargas + permisos de administrador."""
+        if db.get_cfg("perm_descargas") is not None \
+                and db.get_cfg("perm_admin") is not None:
             return
         ans = QMessageBox.question(
-            self, "Permiso de almacenamiento",
-            "¿Permitir que el agente guarde adjuntos y proyectos en tu "
-            "carpeta Descargas?\n\n" + self._data_dir)
-        db.set_cfg("perm_descargas",
-                   "1" if ans == QMessageBox.Yes else "0")
+            self, "Permisos del agente (una sola vez)",
+            "¿Otorgar al agente permisos de administrador para actuar "
+            "en todo tu equipo (crear carpetas, ejecutar comandos, "
+            "abrir programas) y guardar sus archivos en:\n\n"
+            + self._data_dir
+            + "\n\nSolo se pregunta una vez; se guarda tu respuesta.")
+        ok = "1" if ans == QMessageBox.Yes else "0"
+        db.set_cfg("perm_admin", ok)
+        db.set_cfg("perm_descargas", ok)
         os.makedirs(self._data_dir, exist_ok=True)
 
     def _equipo_info(self):
@@ -276,6 +281,7 @@ class MainWindow(QMainWindow):
         self._worker.stat.connect(self.chat.add_rule)
         self._worker.perf.connect(lambda dt, ntok, m=model:
                                   self._auto_tune(m, dt, ntok))
+        self._worker.open_dir.connect(self.set_root)
         self._worker.start()
 
     def _stop(self):

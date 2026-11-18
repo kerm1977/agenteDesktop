@@ -29,6 +29,7 @@ class ChatWorker(QThread):
     failed = Signal(str)
     stat = Signal(str)
     perf = Signal(float, int)   # segundos, tokens
+    open_dir = Signal(str)      # carpeta a abrir como raíz
 
     def __init__(self, backend, model, messages, root, options=None):
         super().__init__()
@@ -124,7 +125,10 @@ class ChatWorker(QThread):
         except json.JSONDecodeError as e:
             return "tool inválido", f"{call[:200]} ({e})"
         try:
-            return tools.run_tool(name, args, self._root)
+            title, detail = tools.run_tool(name, args, self._root)
+            if detail.startswith("@OPEN:"):
+                self.open_dir.emit(detail[6:])
+            return title, detail
         except Exception as e:
             consola.log_error("tool:" + str(name), repr(e))
             return f"{name} (error)", str(e)
