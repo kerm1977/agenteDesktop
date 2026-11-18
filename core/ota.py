@@ -7,7 +7,7 @@ import urllib.request
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STAGING = os.path.join(APP_DIR, ".update")
 VERSION_FILE = os.path.join(APP_DIR, "version.json")
-MANIFEST_URL = ("https://raw.githubusercontent.com/kerm1977/agente-desktop/"
+MANIFEST_URL = ("https://raw.githubusercontent.com/kerm1977/agenteDesktop/"
                 "main/manifest.json")
 RAW_BASE = MANIFEST_URL.rsplit("/", 1)[0] + "/"
 
