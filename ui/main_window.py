@@ -14,7 +14,7 @@ from ui.editor_panel import EditorPanel
 from ui.models_panel import ModelsPanel
 from ui.nuevo_proyecto import NuevoProyectoDialog, crear_proyecto
 from ui.tree_panel import TreePanel
-from ui.worker import ChatWorker
+from ui.worker import ChatWorker, ScanWorker
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -101,7 +101,8 @@ class MainWindow(QMainWindow):
         self.tree.file_opened.connect(self.editor.open_file)
         self.proyecto_tree.file_opened.connect(self.editor.open_file)
         self.editor.file_saved.connect(
-            lambda p: consola.log_info("editor", "guardado " + p))
+            lambda p: (consola.log_info("editor", "guardado " + p),
+                       memoria.invalidate(self._root)))
         self.chat.send_requested.connect(self._send)
         self.chat.stop_requested.connect(self._stop)
         self.chat.attach_requested.connect(self._attach)
@@ -114,7 +115,20 @@ class MainWindow(QMainWindow):
         self.tree.set_root(root)
         self.proyecto_tree.set_root(root)
         self.editor.set_root(root)
-        memoria.load(root)
+        memoria.invalidate(root)
+        self.chat.add_system("Analizando todo el proyecto…")
+        self._scan = ScanWorker(root)
+        self._scan.done.connect(self._scan_done)
+        self._scan.start()
+
+    def _scan_done(self, data, root):
+        if root != self._root:
+            return
+        n, m = len(data["files"]), len(data["dirs"])
+        self.chat.add_system(
+            f"Proyecto analizado: {n} archivos en {m} carpetas — "
+            "tengo todo su contenido en memoria.")
+        consola.log_info("memoria", f"{n} archivos indexados en {root}")
 
     def _pick_dir(self):
         d = QFileDialog.getExistingDirectory(self, "Abrir proyecto (carpeta)",
@@ -158,6 +172,7 @@ class MainWindow(QMainWindow):
                 ultimo = target
             except OSError as e:
                 consola.log_error("adjuntos", repr(e))
+        memoria.invalidate(self._root)
         if ultimo:
             self._stack.setCurrentIndex(0)
             self.tree.reveal(ultimo)

@@ -28,8 +28,14 @@ def build_system(editor_ctx, root, self_mode=False):
             system += "\n(Contenido truncado: usa read_file para ver más.)"
     if root:
         try:
-            system += ("\n\nMemoria del proyecto (estructura y firmas):\n"
-                       + memoria.digest(root, cap=4000))
+            system += (
+                "\n\nPROYECTO COMPARTIDO POR EL USUARIO: ya escaneaste TODO "
+                "su contenido (estructura e inicio de cada archivo abajo). "
+                "OBLIGATORIO: antes de responder sobre cualquier parte del "
+                "proyecto, revisa absolutamente todo lo compartido; usa "
+                "read_file sobre los archivos relevantes para ver su "
+                "contenido completo, sin asumir ni responder de memoria.\n"
+                + memoria.digest(root, cap=6000))
         except Exception as e:
             consola.log_error("memoria", repr(e))
     return system

@@ -13,6 +13,25 @@ _SIG_JS = re.compile(r"^\s*(function|class|const|let|var|export)\s+\w*")
 _EXT_SIG = {".py": _SIG_PY, ".js": _SIG_JS, ".ts": _SIG_JS,
             ".jsx": _SIG_JS, ".tsx": _SIG_JS}
 
+# Extensiones cuyo contenido inicial se memoriza (archivos de texto)
+HEAD_EXTS = {".py", ".js", ".ts", ".jsx", ".tsx", ".html", ".css",
+             ".json", ".md", ".txt", ".yml", ".yaml", ".toml", ".ini",
+             ".cfg", ".java", ".c", ".cpp", ".h", ".cs", ".go", ".rs",
+             ".php", ".rb", ".sh", ".bat", ".sql", ".vue", ".xml"}
+
+
+def _head(path, cap=1200):
+    """Primeras ~1200 letras del archivo si es texto y pesa <200 KB."""
+    if os.path.splitext(path)[1].lower() not in HEAD_EXTS:
+        return ""
+    try:
+        if os.path.getsize(path) > 200000:
+            return ""
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            return f.read(cap)
+    except OSError:
+        return ""
+
 
 def scan_project(root, max_files=400):
     """Devuelve {dirs, files:[{path,size,sig[]}], scanned_at}."""
@@ -35,7 +54,8 @@ def scan_project(root, max_files=400):
                 size = os.path.getsize(full)
             except OSError:
                 size = 0
-            entry = {"path": rel, "size": size, "sig": _signatures(full)}
+            entry = {"path": rel, "size": size, "sig": _signatures(full),
+                     "head": _head(full)}
             out["files"].append(entry)
             if len(out["files"]) >= max_files:
                 return out
@@ -79,17 +99,25 @@ def load(root, max_age=300):
     return data
 
 
-def digest(root, cap=4000):
-    """Resumen textual compacto de la estructura para inyectar al prompt."""
+def digest(root, cap=6000):
+    """Estructura + inicio de cada archivo para inyectar al prompt."""
     data = load(root)
-    lines = [f"Directorios ({len(data['dirs'])}): " + ", ".join(data["dirs"][:60])]
+    lines = [f"Directorios ({len(data['dirs'])}): "
+             + ", ".join(data["dirs"][:60])]
+    total = len(lines[0])
     for f in data["files"]:
         line = f["path"] + f" ({f['size']}B)"
         if f["sig"]:
             line += " :: " + " | ".join(f["sig"][:4])
         lines.append(line)
-        if sum(len(l) for l in lines) > cap:
-            lines.append("... (memoria truncada)")
+        total += len(line)
+        head = (f.get("head") or "")[:600]
+        if head:
+            block = "    | " + head.replace("\n", "\n    | ")
+            lines.append(block)
+            total += len(block)
+        if total > cap:
+            lines.append("... (memoria truncada: usa read_file para el resto)")
             break
     return "\n".join(lines)
 

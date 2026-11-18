@@ -4,9 +4,21 @@ import re
 
 from PySide6.QtCore import QThread, Signal
 
-from core import backends, consola, tools
+from core import backends, consola, memoria, tools
 
 TOOL_RX = re.compile(r"```tool\s*\n(.*?)```", re.S)
+
+
+class ScanWorker(QThread):
+    """Escaneo completo del proyecto en segundo plano (memoria)."""
+    done = Signal(dict, str)
+
+    def __init__(self, root):
+        super().__init__()
+        self._root = root
+
+    def run(self):
+        self.done.emit(memoria.load(self._root), self._root)
 
 
 class ChatWorker(QThread):

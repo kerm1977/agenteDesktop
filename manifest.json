@@ -1,5 +1,5 @@
 {
- "version": "0.2.3",
+ "version": "0.2.4",
  "files": {
   ".gitignore": "4f6ad4d1f3d6d41a7a4fe4f8b336f9581156e6506c262154abde816faeab6005",
   "app.py": "36e93ec89fd1c84da45fa9460bbd16816bde19a37da50598284832fb5292c0df",
@@ -7,17 +7,17 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "b968b0d6616b45c608a9619fef833db0765cdb895abf0ea8a3602071e4555297",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "23d402f47bfc54380f03e6edbc47930a7d41e1007e25a52a3a13c7a6e03e4a47",
+  "version.json": "f55d97b81f59d69adf76c135c4d2c13d107640debf59d6729ffe64ca354bbccf",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "3b11bbb3d9aa2065e203e13b84de3dba43cb7fae06b801049fa00b68cf3651af",
   "core/catalogo.py": "7f02262b18876bdada4260bdbbc1ce2bd00f6a644e679eac2ae088a8db8e9c0b",
   "core/consola.py": "acf76d422f647fb445063a46f9214827c089442d4e1ea6a9d16c20245c188927",
   "core/db.py": "94e6d4499089a8b362a594d27463fca3429b3fdca0742d35a46efe8d29d5c460",
   "core/hwinfo.py": "3bd11f5252b3209b05a3adbef4a726f6105f74e544632962799c1f0e78ce0085",
-  "core/memoria.py": "9fba13108bde99c36c10d5574e8a438d888de6e9b2b1a6d54aef16dd139a3d37",
+  "core/memoria.py": "45cb0f3c54981a99d0640eb00da63fbfd1eaadc09b04f28050c28b0fdd3dfa4d",
   "core/ollama.py": "da5b80d55cba8af403aeeead6270b0c79abffdd8ad383eb30eade257f0a2a557",
   "core/ota.py": "9c0ff73dfc49a26d620a1d43f4f6a5b6cd5bc59f0453b1d8ca24809dc3faff5c",
-  "core/prompts.py": "604e7fd35eee1c5fde1fc8a6c1eb9d97ba2daf00c123e107025c048873a3891a",
+  "core/prompts.py": "b4b4fadc3adae5b20fdd2e9c47bf9cf69a0a87247640b587e7096b1f5d00faef",
   "core/tools.py": "f51d8d354bda9830a32551e3469e22439105f81338556ef808dd1e821f8c57e6",
   "core/updater.py": "99269edb98de85aab626415d3af868213149f353a11a74d8b491508888b48478",
   "core/voz.py": "093703160cd24d61e6c3dfb3057db8dde0fd8791c6dd01cdc93bd15c68b0814a",
@@ -27,12 +27,12 @@
   "ui/console_panel.py": "941bcd9e0d5990cfa0e8004ba5a92e3962adc2b66c522252bba15a02a555a060",
   "ui/editor_panel.py": "e6c9ae71dfd57c530e976b10fd1567ce995bdbcd0ec344063254b7369e5e569f",
   "ui/iconos.py": "1456d33b327618c900ce1b84e7236f0bb17d0c14b581122e7c500f1ef1ba1cb6",
-  "ui/main_window.py": "3f9a5000dd6728d8fec81ee18c323ca0c79f9d2b6e2fe7a806a10064b215ee21",
+  "ui/main_window.py": "67f84c72442c2f7fd17baa47a9b1a27f5b714cf1b4620254bfb36680ce4e5f88",
   "ui/models_panel.py": "5e76908db9d5d3a8787f93b5ab34545c25d76ffe986ec84eb4cda34876310e1a",
   "ui/nuevo_proyecto.py": "ab307800e57d599e405567dd9421c1ce5c70515afb1f965a494cac26da17f2b8",
   "ui/ota_ui.py": "aaad26ade2915be2ee33299183d37775120412df0f0809da11916d963663d658",
   "ui/tree_panel.py": "eec1d959cf9001e7f950f108ff3e1f2dd6d933736c56d9dedf91af66e3b734af",
-  "ui/worker.py": "9f2deab3a028bdd364a16fd2b257becce7f3bd936d4082bb4716673abd25fb25",
+  "ui/worker.py": "e002ad959dc0a82c3ed3b2b221cac472354033a2a2eacf6deefb2a5c57518c52",
   "ui/__init__.py": "f745e33402ff264da36f04edc4da8d24bff6ee974598316b71cf0042cb4686cd"
  }
 }
