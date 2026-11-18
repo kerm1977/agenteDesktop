@@ -1,5 +1,6 @@
 """Panel de chat: mensajes, tarjetas contraíbles y composer estilo Devin."""
 import os
+import time
 
 from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
@@ -99,6 +100,33 @@ class WaveBar(QWidget):
         p.end()
 
 
+class ThinkingBubble(QWidget):
+    """Indicador 'Pensando…' con puntos animados y cronómetro."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        lay = QHBoxLayout(self)
+        lay.setContentsMargins(14, 4, 14, 4)
+        self._dots = QLabel("Pensando")
+        self._dots.setStyleSheet("color:#9aa4b8;font-style:italic;")
+        self._time = QLabel("0:00")
+        self._time.setStyleSheet("color:#5f6673;font-size:11px;")
+        lay.addWidget(self._dots)
+        lay.addStretch(1)
+        lay.addWidget(self._time)
+        self._t0 = time.monotonic()
+        self._n = 0
+        self._timer = QTimer(self)
+        self._timer.timeout.connect(self._tick)
+        self._timer.start(400)
+
+    def _tick(self):
+        self._n = (self._n + 1) % 4
+        self._dots.setText("Pensando" + "." * self._n)
+        s = int(time.monotonic() - self._t0)
+        self._time.setText(f"{s // 60}:{s % 60:02d}")
+
+
 class ChatPanel(QWidget):
     send_requested = Signal(str, list)
     stop_requested = Signal()
@@ -108,6 +136,7 @@ class ChatPanel(QWidget):
         super().__init__(parent)
         self._attachments = []
         self._stream_lbl = None
+        self._thinking = None
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
 
@@ -304,16 +333,27 @@ class ChatPanel(QWidget):
         return card
 
     def start_stream(self):
-        self._stream_lbl = Bubble("", "assistant")
-        self._vbox.addWidget(self._stream_lbl)
+        self._stream_lbl = None
+        self._thinking = ThinkingBubble()
+        self._vbox.addWidget(self._thinking)
         self._scroll_down()
 
+    def _drop_thinking(self):
+        if self._thinking is not None:
+            self._vbox.removeWidget(self._thinking)
+            self._thinking.deleteLater()
+            self._thinking = None
+
     def append_token(self, text):
-        if self._stream_lbl is not None:
-            self._stream_lbl.setText(self._stream_lbl.text() + text)
-            self._scroll_down()
+        self._drop_thinking()
+        if self._stream_lbl is None:
+            self._stream_lbl = Bubble("", "assistant")
+            self._vbox.addWidget(self._stream_lbl)
+        self._stream_lbl.setText(self._stream_lbl.text() + text)
+        self._scroll_down()
 
     def end_stream(self):
+        self._drop_thinking()
         self._stream_lbl = None
         self._scroll_down()
 
