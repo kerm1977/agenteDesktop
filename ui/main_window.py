@@ -1,12 +1,13 @@
 """Ventana principal: riel de iconos, stack lateral, chat central, editor."""
 import os
+import re
 import shutil
 
 from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (QDockWidget, QFileDialog, QMainWindow,
                                QMessageBox, QSplitter, QStackedWidget)
 
-from core import backends, consola, db, memoria, ollama, prompts
+from core import backends, consola, db, memoria, ollama, prompts, tools
 from ui import barras, ota_ui
 from ui.chat_panel import ChatPanel
 from ui.console_panel import ConsolePanel
@@ -273,7 +274,152 @@ class MainWindow(QMainWindow):
             self.chat.cmb_model.setCurrentText(models[0])
 
     # ---------- chat ----------
+    # ---------- acciones directas (sin modelo) ----------
+    def _donde(self, t):
+        """Carpeta destino según palabras del usuario."""
+        home = os.path.expanduser("~")
+        if re.search(r"escritorio|desktop", t):
+            for d in ("Desktop", "Escritorio"):
+                p = os.path.join(home, d)
+                if os.path.isdir(p):
+                    return p
+            return os.path.join(home, "Desktop")
+        if "descarga" in t:
+            return os.path.join(home, "Downloads")
+        if "documento" in t:
+            return os.path.join(home, "Documents")
+        m = re.search(r"[a-z]:[\\/][\w\-.\\/ ]+", t)
+        if m:
+            return m.group(0).strip()
+        return self._data_dir
+
+    def _nombre(self, text):
+        m = re.search(r"llamad[ao]s?\s+([\w\-. ]+?)(?:\s+en\s|\s*$|[.,])",
+                      text, re.I)
+        if m:
+            return m.group(1).strip().strip('"\'')
+        m = re.search(r"(?:carpeta|directorio|archivo)\s+([\w\-. ]+?)"
+                      r"(?:\s+en\s|\s*$|[.,])", text, re.I)
+        return m.group(1).strip().strip('"\'') if m else None
+
+    def _ejecutar(self, text, titulo, detalle, ok_msg):
+        """Muestra la acción como tarjeta + respuesta, y abre raíz si aplica."""
+        self.chat.add_user(text)
+        if detalle.startswith("@OPEN:"):
+            dest = detalle[6:]
+            self.set_root(dest)
+            self._stack.setCurrentIndex(0)
+            detalle = dest
+        self.chat.add_card(titulo, detalle)
+        self.chat.add_system(ok_msg)
+        db.log_chat("user", text)
+        db.log_chat("assistant", ok_msg + "\n" + detalle)
+        consola.log_info("tool", titulo)
+        return True
+
+    def _accion_directa(self, text):
+        """Ordenes comunes del equipo ejecutadas al instante."""
+        if not text.strip():
+            return False
+        t = " " + text.lower().strip() + " "
+        if "sabes" in t or "puedes " in t and "crea" not in t:
+            return False
+        crear = re.search(r"crea|genera|haz |hace |agrega|nueva |nuevo ", t)
+        borrar = re.search(r"borra|elimin|quita|delete|suprim", t)
+        renom = re.search(r"renombra|cambia el nombre|rename", t)
+        abrir = re.search(r"abre|abrir|muéstrame|muestrame", t)
+        leer = re.search(r"lee|analiza|resume|resumen|muestra el contenido", t)
+        mover = re.search(r"mueve|mover|copia|copiar|traslada", t)
+        cosa = re.search(r"carpeta|directorio|archivo|documento|fichero", t)
+
+        m = re.search(r"https?://\S*github\S*", text, re.I)
+        if m and re.search(r"clon|repo|github|agrega", t):
+            return self._run(text, "clone_repo", {"url": m.group(0).rstrip('.,)')},
+                             "Repositorio clonado y abierto en el editor.")
+        if crear and cosa:
+            nombre = self._nombre(text) or "nueva-carpeta"
+            if re.search(r"archivo|documento|fichero", t):
+                return self._run(text, "write_file",
+                                 {"path": os.path.join(self._donde(t), nombre),
+                                  "content": ""},
+                                 f"Archivo creado: {nombre}")
+            dest = os.path.join(self._donde(t), nombre)
+            return self._run(text, "create_dir", {"path": dest},
+                             f"Carpeta creada: {dest}")
+        if borrar and cosa:
+            nombre = self._nombre(text)
+            if nombre:
+                dest = nombre if os.path.isabs(nombre) else os.path.join(
+                    self._donde(t), nombre)
+                return self._run(text, "delete_path", {"path": dest},
+                                 f"Eliminado: {dest}")
+        if renom and cosa:
+            m = re.search(r"(?:renombra\w*|cambia el nombre\w*)\s+"
+                          r"([\w\-. ]+?)\s+(?:a|por|como)\s+([\w\-. ]+?)"
+                          r"(?:\s+en\s|\s*$|[.,])", text, re.I)
+            if m:
+                viejo = os.path.join(self._donde(t), m.group(1).strip())
+                nuevo = os.path.join(os.path.dirname(viejo),
+                                     m.group(2).strip())
+                try:
+                    os.rename(viejo, nuevo)
+                    return self._ejecutar(text, "rename " + viejo,
+                                          "-> " + nuevo,
+                                          f"Renombrado a: {nuevo}")
+                except OSError as e:
+                    return self._ejecutar(text, "rename " + viejo, str(e),
+                                          "No se pudo renombrar: " + viejo)
+        if mover and cosa:
+            m = re.search(r"([\w\-. ]+?)\s+(?:a|hacia)\s+([\w\-.\\/: ]+?)"
+                          r"\s*$", text, re.I)
+            if m:
+                src = os.path.join(self._donde(t), m.group(1).strip())
+                dst_dir = self._donde(" " + m.group(2).lower() + " ")
+                try:
+                    shutil.move(src, dst_dir)
+                    return self._ejecutar(text, "move " + src, "-> " + dst_dir,
+                                          f"Movido a: {dst_dir}")
+                except OSError as e:
+                    return self._ejecutar(text, "move " + src, str(e),
+                                          "No se pudo mover: " + src)
+        if leer and re.search(r"\.(pdf|docx|xlsx|pptx|txt|md|csv|json|py|js|"
+                              r"html|xml)\b", t):
+            m = re.search(r"([\w\-. ]+\.(?:pdf|docx|xlsx|pptx|txt|md|csv|"
+                          r"json|py|js|html|xml))", text, re.I)
+            ruta = m.group(1).strip()
+            if not os.path.isabs(ruta):
+                ruta = os.path.join(self._donde(t), ruta)
+            return self._run(text, "read_doc", {"path": ruta},
+                             "Documento leído.")
+        if abrir and cosa:
+            nombre = self._nombre(text)
+            if nombre:
+                dest = nombre if os.path.isabs(nombre) else os.path.join(
+                    self._donde(t), nombre)
+                return self._run(text, "open_dir", {"path": dest},
+                                 f"Abierto en el editor: {dest}")
+        if re.search(r"lista|escanea|explora|qué hay|que hay", t) and cosa:
+            dest = self._donde(t)
+            return self._run(text, "list_dir", {"path": dest},
+                             f"Contenido de: {dest}")
+        return False
+
+    def _run(self, text, name, args, ok_msg):
+        """Corre una herramienta al instante y la muestra."""
+        try:
+            titulo, detalle = tools.run_tool(name, args, self._root)
+        except Exception as e:  # noqa: BLE001
+            self.chat.add_user(text)
+            self.chat.add_system(f"Error en {name}: {e}")
+            consola.log_error("tool", f"{name}: {e}")
+            db.log_chat("user", text)
+            db.log_chat("assistant", f"Error en {name}: {e}")
+            return True
+        return self._ejecutar(text, titulo, detalle, ok_msg)
+
     def _send(self, text, attachments):
+        if self._accion_directa(text):
+            return
         backend = self.chat.cmb_backend.currentData()
         model = self.chat.cmb_model.currentText()
         if not model or model.startswith("("):
