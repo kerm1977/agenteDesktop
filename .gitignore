@@ -1,0 +1,10 @@
+.venv/
+modelos/
+.update/
+.agente/
+__pycache__/
+*.pyc
+*.log
+dist/
+build/
+*.spec
