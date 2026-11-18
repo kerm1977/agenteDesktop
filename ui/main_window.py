@@ -300,6 +300,8 @@ class MainWindow(QMainWindow):
                      if m["role"] != "system"][-8:]
         self._messages = ([{"role": "system", "content": system}]
                           + historial)
+        msg += ("\n\n(Instrucción interna: responde SIEMPRE en español. "
+                "Nunca respondas en inglés ni otro idioma.)")
         self._messages.append({"role": "user", "content": msg})
         db.log_chat("user", msg)
         options = {k: v for k, v in db.get_model_prefs(model).items()

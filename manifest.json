@@ -1,5 +1,5 @@
 {
- "version": "0.5.0",
+ "version": "0.5.1",
  "files": {
   ".gitignore": "4f6ad4d1f3d6d41a7a4fe4f8b336f9581156e6506c262154abde816faeab6005",
   "app.py": "c67ddceba1c9bba1b6e7f06c9c1c8866a73247ab8106ec93c7fa74b7ee0b708c",
@@ -7,7 +7,7 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "8728f56a285910a461cfd3a17d03b9045f3b4fa695b35348108db21f067b9c57",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "45d4c0b23ca310d99fbf067ed6f53bd329993a6bd63ce1fb98970a324236137a",
+  "version.json": "38348d742bff5a8524cda227b7d4bd383c65853e7e8ae35d6b87078ce8cd27ae",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "96beadad11524c0319886ef331c2010867169e9449ef7a5af6db1aa93ceb6f97",
   "core/bench.py": "45e590ab0e46a976a48b4f6bf5f6bbbee1e0a5ed5d42853351190edd04b1d72a",
@@ -30,7 +30,7 @@
   "ui/editor_panel.py": "e6c9ae71dfd57c530e976b10fd1567ce995bdbcd0ec344063254b7369e5e569f",
   "ui/equipo_dialog.py": "dd9d9531b8407f75be5de8e069ec3278862a86d390c4be88b9d5fa7b2d2b994e",
   "ui/iconos.py": "ce095bbbaa3b8f842a5808602ebce1684d9eb12f7505d38fd24be9060921d0de",
-  "ui/main_window.py": "ccac3ad75c927f5ab9ba87fcc05dff86df45b4774ff701148f045aeb9b946f37",
+  "ui/main_window.py": "b02d5887004ceffce0175d91348944185cb30d6a8933a78aaa21f373a1c51183",
   "ui/models_panel.py": "5dc60f10b103698c5925edb2c1f2f3f12560021490c8a020c5defe16645eb1da",
   "ui/nuevo_proyecto.py": "ab307800e57d599e405567dd9421c1ce5c70515afb1f965a494cac26da17f2b8",
   "ui/ota_ui.py": "aaad26ade2915be2ee33299183d37775120412df0f0809da11916d963663d658",
