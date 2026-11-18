@@ -104,21 +104,22 @@ def chat_stream(backend, model, messages, options=None):
         _active_resp = r
         try:
             for raw in r:
-            raw = raw.strip()
-            if not raw or raw == b"data: [DONE]":
-                continue
-            if raw.startswith(b"data:"):
-                raw = raw[5:].strip()
-            try:
-                obj = json.loads(raw.decode())
-            except Exception:
-                continue
-            for ch in obj.get("choices", []):
-                delta = ch.get("delta", {})
-                content = delta.get("content")
-                if content:
-                    yield {"model": model, "created_at": "",
-                           "message": {"role": "assistant", "content": content},
-                           "done": ch.get("finish_reason") is not None}
+                raw = raw.strip()
+                if not raw or raw == b"data: [DONE]":
+                    continue
+                if raw.startswith(b"data:"):
+                    raw = raw[5:].strip()
+                try:
+                    obj = json.loads(raw.decode())
+                except Exception:
+                    continue
+                for ch in obj.get("choices", []):
+                    delta = ch.get("delta", {})
+                    content = delta.get("content")
+                    if content:
+                        yield {"model": model, "created_at": "",
+                               "message": {"role": "assistant",
+                                           "content": content},
+                               "done": ch.get("finish_reason") is not None}
         finally:
             _active_resp = None
