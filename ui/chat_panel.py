@@ -142,6 +142,7 @@ class ChatPanel(QWidget):
         self._attachments = []
         self._stream_lbl = None
         self._thinking = None
+        self._pendiente_envio = False
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
 
@@ -289,6 +290,23 @@ class ChatPanel(QWidget):
         return super().eventFilter(obj, event)
 
     def _emit_send(self):
+        if self._voz is not None:
+            # aún grabando: parar, esperar el texto final y enviar solo
+            self._pendiente_envio = True
+            self.input.setPlaceholderText("Procesando audio…")
+            self.btn_mic.setChecked(False)
+            self.wave.stop()
+            self._voz.stop()
+            return
+        text = self.input.toPlainText().strip()
+        if text or self._attachments:
+            self.input.clear()
+            atts, self._attachments = self._attachments, []
+            self._chips.setVisible(False)
+            self.send_requested.emit(text, atts)
+
+    def _enviar_pendiente(self):
+        """Tras la transcripción final: envía el input completo."""
         text = self.input.toPlainText().strip()
         if text or self._attachments:
             self.input.clear()
@@ -304,7 +322,7 @@ class ChatPanel(QWidget):
                 engine = self.cmb_voz.currentText().lower()
                 self._voz = VoiceWorker(engine)
                 self._voz.text.connect(self._dictar)
-                self._voz.final.connect(self._dictar)
+                self._voz.final.connect(self._dictar_final)
                 self._voz.level.connect(self.wave.set_level)
                 self._voz.error.connect(self._voz_error)
                 self._voz.finished.connect(self._voz_termino)
@@ -334,6 +352,13 @@ class ChatPanel(QWidget):
 
     def _dictar(self, texto):
         self.input.insertPlainText(texto + " ")
+
+    def _dictar_final(self, texto):
+        if texto:
+            self.input.insertPlainText(texto + " ")
+        if self._pendiente_envio:
+            self._pendiente_envio = False
+            self._enviar_pendiente()
 
     def _voz_error(self, err):
         self.add_system("Voz: " + err)
