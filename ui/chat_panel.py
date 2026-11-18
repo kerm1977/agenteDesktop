@@ -129,6 +129,17 @@ class ChatPanel(QWidget):
         row.addWidget(self.cmb_model)
         row.addStretch(1)
 
+        self.btn_mic = QPushButton("🎤")
+        self.btn_mic.setToolTip("Dictar por voz (es-ES)")
+        self.btn_mic.setCheckable(True)
+        self.btn_mic.setStyleSheet(
+            "QPushButton{background:#303038;color:#ddd;border:1px solid #42424c;"
+            "border-radius:12px;padding:5px 12px;}"
+            "QPushButton:checked{background:#a33d3d;color:#fff;}")
+        self.btn_mic.clicked.connect(self._toggle_mic)
+        row.addWidget(self.btn_mic)
+        self._voz = None
+
         self.btn_stop = QPushButton("■")
         self.btn_stop.setEnabled(False)
         self.btn_stop.setStyleSheet(
@@ -169,6 +180,30 @@ class ChatPanel(QWidget):
             atts, self._attachments = self._attachments, []
             self._chips.setVisible(False)
             self.send_requested.emit(text, atts)
+
+    # ---------- dictado por voz ----------
+    def _toggle_mic(self, on):
+        if on:
+            from core.voz import VoiceWorker
+            self._voz = VoiceWorker()
+            self._voz.text.connect(self._dictar)
+            self._voz.error.connect(self._voz_error)
+            self._voz.start()
+            self.add_system("🎤 Escuchando… habla y se dicta aquí. "
+                            "Toca 🎤 otra vez para parar.")
+        elif self._voz:
+            self._voz.stop()
+            self._voz = None
+
+    def _dictar(self, texto):
+        self.input.insertPlainText(texto + " ")
+
+    def _voz_error(self, err):
+        self.add_system("🎤 " + err)
+        self.btn_mic.setChecked(False)
+        if self._voz:
+            self._voz.stop()
+            self._voz = None
 
     def add_user(self, text):
         self._vbox.addWidget(Bubble("Tú: " + text, "user"))
