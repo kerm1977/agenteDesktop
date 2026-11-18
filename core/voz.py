@@ -19,9 +19,12 @@ _CHUNK = 2000
 def modelos_vosk():
     """Modelos Vosk instalados en <app>/voz/vosk-model-*."""
     try:
-        return [os.path.join(VOSK_DIR, d) for d in os.listdir(VOSK_DIR)
-                if d.startswith("vosk-model")
-                and os.path.isdir(os.path.join(VOSK_DIR, d))]
+        # el modelo completo ("vosk-model-es") gana al "small" — más preciso
+        return sorted(
+            (os.path.join(VOSK_DIR, d) for d in os.listdir(VOSK_DIR)
+             if d.startswith("vosk-model")
+             and os.path.isdir(os.path.join(VOSK_DIR, d))),
+            key=lambda p: ("small" in p, p))
     except OSError:
         return []
 

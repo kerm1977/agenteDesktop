@@ -1,5 +1,5 @@
 {
- "version": "0.4.7",
+ "version": "0.4.8",
  "files": {
   ".gitignore": "4f6ad4d1f3d6d41a7a4fe4f8b336f9581156e6506c262154abde816faeab6005",
   "app.py": "36e93ec89fd1c84da45fa9460bbd16816bde19a37da50598284832fb5292c0df",
@@ -7,7 +7,7 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "8728f56a285910a461cfd3a17d03b9045f3b4fa695b35348108db21f067b9c57",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "c37c7325a29ca1a38a91fad97419dac37da270c558a13eadd1f86654d6aa551b",
+  "version.json": "6130363897ed6ed9919c783bbca64bdeb9fd7c45ddc2c68b554946a55757bf13",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "96beadad11524c0319886ef331c2010867169e9449ef7a5af6db1aa93ceb6f97",
   "core/bench.py": "45e590ab0e46a976a48b4f6bf5f6bbbee1e0a5ed5d42853351190edd04b1d72a",
@@ -21,7 +21,7 @@
   "core/prompts.py": "f62dcff86a0901e56939ca4732fe93605f19adcbe051744e9d96bc2073a31fda",
   "core/tools.py": "2ddaef7aca838e412cdb643f3d71a0dab158ea50dcd67130d42066298def2a83",
   "core/updater.py": "99269edb98de85aab626415d3af868213149f353a11a74d8b491508888b48478",
-  "core/voz.py": "093703160cd24d61e6c3dfb3057db8dde0fd8791c6dd01cdc93bd15c68b0814a",
+  "core/voz.py": "becdc853c7eedf5c60bab821890a9d54ac9549746a85fb079e43c31a3e75f097",
   "core/__init__.py": "43e1ecfd357e54391a7755088e876aced42c99bafcd2e2157ae9c8525dc1e5f7",
   "ui/ajustes_dialog.py": "be255f446837ea4ff25795589ec60fa0251f102037a945031bc6311e44104d9d",
   "ui/barras.py": "6098db163c730696326564d5c8b3b2b2f34d005d4b6daa960b98f9649b61212c",
