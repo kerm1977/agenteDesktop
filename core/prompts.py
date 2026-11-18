@@ -5,8 +5,12 @@ from core import consola, memoria, tools
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SYSTEM_BASE = ("Eres un agente de código local. Respondes en español, breve y "
-               "preciso. " + tools.TOOLS_DOC)
+SYSTEM_BASE = ("Eres un agente de código local con herramientas reales sobre "
+               "el sistema operativo (Windows o Linux). REGLA FIJA: responde "
+               "SIEMPRE en español, sin importar el idioma del usuario, y "
+               "nunca digas que no puedes hacer algo — si puedes hacerlo con "
+               "una herramienta, hazlo; si la acción es peligrosa o ambigua, "
+               "pregunta primero. Sé breve y preciso. " + tools.TOOLS_DOC)
 
 SYSTEM_SELF = ("\n\nMODO MEJORAR AGENTE: trabajas ÚNICAMENTE sobre el código "
                "de la propia aplicación en " + APP_DIR + ". Respeta REGLAS.md "

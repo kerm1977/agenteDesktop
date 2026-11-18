@@ -5,7 +5,10 @@ import subprocess
 from core import memoria
 
 MAX_READ = 20000
-_DENY = ("format ", "del /s", "rd /s", "rmdir /s", "shutdown", "reg ")
+_DENY = ("format ", "del /s", "rd /s", "rmdir /s", "shutdown", "reg ",
+         "mkfs", "dd if", "> /dev/", "rm -rf /", "rm -fr /")
+_SYS_DENY = _DENY + ("bcdedit", "diskpart", "fdisk", "net user",
+                     "del c:\\", "rd c:\\", "takeown", "cipher /w")
 
 
 def _safe(root, path):
@@ -77,6 +80,16 @@ def run_tool(name, args, root):
         return "search_files " + needle, "\n".join(hits) or "sin coincidencias"
     if name == "project_map":
         return "project_map", memoria.digest(root, cap=6000)
+    if name == "sys_command":
+        cmd = args.get("cmd", "")
+        low = cmd.lower()
+        if any(b in low for b in _SYS_DENY):
+            raise ValueError("comando de sistema bloqueado por seguridad")
+        cwd = args.get("cwd") or os.path.expanduser("~")
+        out = subprocess.run(cmd, shell=True, cwd=cwd, capture_output=True,
+                             text=True, timeout=120, errors="replace")
+        text = (out.stdout + out.stderr).strip()[:4000]
+        return "sys_command " + cmd, f"exit {out.returncode}\n{text}"
     if name == "run_command":
         cmd = args.get("cmd", "")
         low = cmd.lower()
@@ -97,7 +110,14 @@ TOOLS_DOC = """Tienes herramientas para actuar sobre el proyecto. Úsalas en blo
 
 Herramientas: list_dir{path}, read_file{path}, write_file{path,content},
 edit_file{path,old,new}, append_file{path,content}, create_dir{path},
-search_files{text}, project_map{}, run_command{cmd}.
+search_files{text}, project_map{}, run_command{cmd} (dentro del proyecto),
+sys_command{cmd,cwd} (cualquier comando del sistema operativo: crear
+carpetas fuera del proyecto, abrir programas, instalar/desinstalar,
+gestionar archivos del equipo; funciona en Windows y Linux).
+
+ERES UN AGENTE REAL del sistema operativo: si el usuario pide crear una
+carpeta, abrir algo, instalar/desinstalar un programa o cualquier acción
+en su equipo, usa sys_command — nunca respondas que no puedes hacerlo.
 
 Modo de trabajo inteligente:
 - Si no conoces la estructura, PRIMERO usa project_map; no leas todo el proyecto.
