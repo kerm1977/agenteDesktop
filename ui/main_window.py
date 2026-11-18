@@ -244,6 +244,7 @@ class MainWindow(QMainWindow):
         self._worker.card.connect(self.chat.add_card)
         self._worker.finished_text.connect(self._chat_done)
         self._worker.failed.connect(self._chat_failed)
+        self._worker.stat.connect(self.chat.add_rule)
         self._worker.start()
 
     def _stop(self):

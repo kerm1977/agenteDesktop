@@ -33,11 +33,12 @@ _active_resp = None
 def abort_stream():
     """Cierra conexión/respuesta activa para desbloquear chat_stream."""
     global _active_conn, _active_resp
+    resp = _active_resp
     conn = _active_conn
     _active_resp = _active_conn = None
-    if _active_resp is not None:
+    if resp is not None:
         try:
-            _active_resp.close()
+            resp.close()
         except Exception:
             pass
     if conn is not None:

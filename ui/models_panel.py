@@ -10,7 +10,7 @@ from PySide6.QtWidgets import (QComboBox, QFrame, QHBoxLayout, QLabel,
                                QProgressBar, QPushButton, QScrollArea,
                                QSpinBox, QVBoxLayout, QWidget)
 
-from core import backends, catalogo, consola, db, hwinfo, ollama
+from core import backends, bench, catalogo, consola, db, hwinfo, ollama
 
 CSS = ("QWidget{background:#212126;color:#e2e2e6;}"
        "QListWidget,QScrollArea{background:#232329;border:1px solid #3a3a42;}"
@@ -69,6 +69,25 @@ class HwWorker(QThread):
 
     def run(self):
         self.done.emit(hwinfo.scan())
+
+
+class BenchWorker(QThread):
+    """Prueba cada modelo instalado midiendo su latencia real."""
+    step = Signal(str, int, object)   # modelo, ms, ok | error
+    done = Signal(list)
+
+    def __init__(self, models):
+        super().__init__()
+        self._models = models
+
+    def run(self):
+        res = []
+        for m in self._models:
+            ok, ms, err = bench.ping_model("ollama", m)
+            db.save_bench(m, ok, ms)
+            self.step.emit(m, ms, ok if ok else err)
+            res.append((m, ok, ms))
+        self.done.emit(res)
 
 
 class ModelRow(QFrame):
@@ -204,7 +223,12 @@ class ModelsPanel(QWidget):
         btn_ref = QPushButton("↻")
         btn_ref.setStyleSheet("background:#303038;")
         btn_ref.clicked.connect(self.refresh)
+        btn_bench = QPushButton("Analizar")
+        btn_bench.setStyleSheet("background:#303038;")
+        btn_bench.setToolTip("Mide qué tan rápido responde cada modelo")
+        btn_bench.clicked.connect(self.analyze)
         row2.addWidget(btn_dir, 1)
+        row2.addWidget(btn_bench)
         row2.addWidget(btn_ref)
         lay.addLayout(row2)
 
@@ -313,5 +337,36 @@ class ModelsPanel(QWidget):
 
     def refresh(self):
         self._list.clear()
-        self._list.addItems(backends.list_models("ollama")
-                            or ["(Ollama desconectado o sin modelos)"])
+        for m in backends.list_models("ollama") \
+                or ["(Ollama desconectado o sin modelos)"]:
+            b = db.get_bench(m)
+            suf = f"   ✓ {b[1] / 1000:.1f} s" if b and b[0] else \
+                  ("   ✗ sin respuesta" if b else "")
+            self._list.addItem(m + suf)
+
+    # ---------- analizador ----------
+    def analyze(self):
+        models = backends.list_models("ollama")
+        if not models:
+            self._status.setText("Sin modelos instalados para analizar.")
+            return
+        self._status.setText(f"Analizando {len(models)} modelos…")
+        self._bench = BenchWorker(models)
+        self._bench.step.connect(
+            lambda m, ms, r: self._status.setText(
+                f"{m}: " + (f"✓ {ms / 1000:.1f} s"
+                           if r is True else f"✗ {r}")))
+        self._bench.done.connect(self._bench_done)
+        self._bench.start()
+
+    def _bench_done(self, res):
+        ok = [x for x in res if x[1]]
+        mal = [x[0] for x in res if not x[1]]
+        for m, okk, ms in res:
+            consola.log_info("bench", f"{m}: "
+                             + (f"✓ {ms / 1000:.1f} s" if okk else "✗"))
+        rapido = min(ok, key=lambda x: x[2])[0] if ok else "—"
+        self._status.setText(
+            f"Funcionan: {len(ok)}/{len(res)} · más rápido: {rapido}"
+            + (f" · fallan: {', '.join(mal)}" if mal else ""))
+        self.refresh()

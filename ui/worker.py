@@ -1,6 +1,7 @@
 """Hilo de chat: streaming del modelo + ejecución de herramientas."""
 import json
 import re
+import time
 
 from PySide6.QtCore import QThread, Signal
 
@@ -26,6 +27,7 @@ class ChatWorker(QThread):
     card = Signal(str, str)      # título, detalle
     finished_text = Signal(str)
     failed = Signal(str)
+    stat = Signal(str)
 
     def __init__(self, backend, model, messages, root, options=None):
         super().__init__()
@@ -50,6 +52,10 @@ class ChatWorker(QThread):
 
     def _loop(self):
         full_reply = ""
+        ntok = 0
+        t0 = time.monotonic()
+        first = None
+        consola.log_info("chat", f"enviando a {self._model}…")
         for _round in range(self._rounds_max):
             if self._stop:
                 break
@@ -62,7 +68,13 @@ class ChatWorker(QThread):
                         break
                     delta = chunk.get("message", {}).get("content", "")
                     if delta:
+                        if first is None:
+                            first = time.monotonic()
+                            consola.log_info(
+                                "chat", f"primer token en "
+                                        f"{first - t0:.1f} s")
                         buf += delta
+                        ntok += 1
                         self.token.emit(delta)
             except Exception as e:
                 if self._stop:
@@ -85,6 +97,7 @@ class ChatWorker(QThread):
             for call in calls:
                 if self._stop:
                     break
+                consola.log_info("chat", "herramienta: " + call[:60])
                 title, detail = self._run_call(call)
                 self.card.emit(title, detail)
                 results.append(f"[{title}]\n{detail}")
@@ -93,6 +106,10 @@ class ChatWorker(QThread):
             self._messages.append({"role": "user",
                                    "content": "Resultados de herramientas:\n\n"
                                               + "\n\n".join(results)})
+        dt = time.monotonic() - t0
+        self.stat.emit(
+            f"{self._model} · respuesta en {dt:.1f} s · {ntok} tokens"
+            + (f" · primer token {first - t0:.1f} s" if first else ""))
         self.finished_text.emit(full_reply.strip())
 
     def _run_call(self, call):

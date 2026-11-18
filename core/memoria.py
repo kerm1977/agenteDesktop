@@ -105,17 +105,19 @@ def digest(root, cap=6000):
     lines = [f"Directorios ({len(data['dirs'])}): "
              + ", ".join(data["dirs"][:60])]
     total = len(lines[0])
+    n_head = 0
     for f in data["files"]:
         line = f["path"] + f" ({f['size']}B)"
         if f["sig"]:
             line += " :: " + " | ".join(f["sig"][:4])
         lines.append(line)
         total += len(line)
-        head = (f.get("head") or "")[:600]
-        if head:
+        head = (f.get("head") or "")[:350]
+        if head and n_head < 40:
             block = "    | " + head.replace("\n", "\n    | ")
             lines.append(block)
             total += len(block)
+            n_head += 1
         if total > cap:
             lines.append("... (memoria truncada: usa read_file para el resto)")
             break

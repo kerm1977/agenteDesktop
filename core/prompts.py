@@ -35,7 +35,7 @@ def build_system(editor_ctx, root, self_mode=False):
                 "proyecto, revisa absolutamente todo lo compartido; usa "
                 "read_file sobre los archivos relevantes para ver su "
                 "contenido completo, sin asumir ni responder de memoria.\n"
-                + memoria.digest(root, cap=6000))
+                + memoria.digest(root, cap=3500))
         except Exception as e:
             consola.log_error("memoria", repr(e))
     return system

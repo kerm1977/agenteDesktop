@@ -26,6 +26,8 @@ def init():
         con.execute("""CREATE TABLE IF NOT EXISTS chat_log(
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ts REAL, role TEXT, content TEXT)""")
+        con.execute("""CREATE TABLE IF NOT EXISTS model_bench(
+            model TEXT PRIMARY KEY, ok INTEGER, ms INTEGER, ts REAL)""")
 
 
 # ---------- preferencias por modelo ----------
@@ -58,6 +60,20 @@ def last_hw_scan():
         row = con.execute("SELECT * FROM hw_scan ORDER BY id DESC LIMIT 1"
                           ).fetchone()
     return json.loads(row["datos"]) if row else None
+
+
+# ---------- analizador de modelos ----------
+def save_bench(model, ok, ms):
+    with _conn() as con:
+        con.execute("INSERT OR REPLACE INTO model_bench VALUES(?,?,?,?)",
+                    (model, int(ok), ms, time.time()))
+
+
+def get_bench(model):
+    with _conn() as con:
+        row = con.execute("SELECT ok, ms FROM model_bench WHERE model=?",
+                          (model,)).fetchone()
+    return (row["ok"], row["ms"]) if row else None
 
 
 # ---------- historial ----------
