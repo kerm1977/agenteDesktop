@@ -129,6 +129,15 @@ class ChatPanel(QWidget):
         row.addWidget(self.cmb_model)
         row.addStretch(1)
 
+        self.cmb_voz = QComboBox()
+        self.cmb_voz.addItems(["Vosk", "Google"])
+        self.cmb_voz.setToolTip("Motor de voz: Vosk = offline, "
+                              "Google = online")
+        self.cmb_voz.setStyleSheet(
+            "QComboBox{background:#303038;color:#ddd;"
+            "border:1px solid #42424c;border-radius:6px;"
+            "padding:3px 8px;}")
+        row.addWidget(self.cmb_voz)
         self.btn_mic = QPushButton("🎤")
         self.btn_mic.setToolTip("Dictar por voz (es-ES)")
         self.btn_mic.setCheckable(True)
@@ -185,7 +194,8 @@ class ChatPanel(QWidget):
     def _toggle_mic(self, on):
         if on:
             from core.voz import VoiceWorker
-            self._voz = VoiceWorker()
+            engine = self.cmb_voz.currentText().lower()
+            self._voz = VoiceWorker(engine)
             self._voz.text.connect(self._dictar)
             self._voz.error.connect(self._voz_error)
             self._voz.start()
