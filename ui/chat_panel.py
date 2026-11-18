@@ -1,7 +1,7 @@
 """Panel de chat: mensajes, tarjetas contraíbles y composer estilo Devin."""
 import os
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QSize, Qt, QTimer, Signal
 from PySide6.QtGui import QColor, QFont, QPainter
 from PySide6.QtWidgets import (QComboBox, QFrame, QGroupBox, QHBoxLayout,
                                QLabel, QMenu, QPlainTextEdit, QPushButton,
@@ -157,7 +157,9 @@ class ChatPanel(QWidget):
 
         row = QHBoxLayout()
         self.btn_attach = QToolButton()
-        self.btn_attach.setText("+")
+        from ui import iconos
+        self.btn_attach.setIcon(iconos.icon("plus", 14))
+        self.btn_attach.setIconSize(QSize(14, 14))
         self.btn_attach.setPopupMode(QToolButton.InstantPopup)
         self.btn_attach.setStyleSheet(
             "QToolButton{background:#303038;color:#ddd;border:1px solid #42424c;"
@@ -192,7 +194,8 @@ class ChatPanel(QWidget):
             "border:1px solid #42424c;border-radius:6px;"
             "padding:3px 8px;}")
         row.addWidget(self.cmb_voz)
-        self.btn_mic = QPushButton("●")
+        self.btn_mic = QPushButton(iconos.icon("mic", 14), "")
+        self.btn_mic.setIconSize(QSize(14, 14))
         self.btn_mic.setToolTip("Dictar por voz (es-ES)")
         self.btn_mic.setCheckable(True)
         self.btn_mic.setStyleSheet(
@@ -203,13 +206,15 @@ class ChatPanel(QWidget):
         row.addWidget(self.btn_mic)
         self._voz = None
 
-        self.btn_stop = QPushButton("■")
+        self.btn_stop = QPushButton(iconos.icon("stop", 14), "")
+        self.btn_stop.setIconSize(QSize(14, 14))
         self.btn_stop.setEnabled(False)
         self.btn_stop.setStyleSheet(
             "QPushButton{background:#6e3636;color:#eee;border:none;"
             "border-radius:12px;padding:5px 12px;}"
             "QPushButton:disabled{background:#303038;color:#777;}")
-        self.btn_send = QPushButton("▶")
+        self.btn_send = QPushButton(iconos.icon("send", 14), "")
+        self.btn_send.setIconSize(QSize(14, 14))
         self.btn_send.setStyleSheet(
             "QPushButton{background:#2e7fb8;color:white;border:none;"
             "border-radius:12px;padding:5px 14px;font-size:14px;}"
