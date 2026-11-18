@@ -23,6 +23,21 @@ def _http_json(url, payload=None, timeout=8):
         return json.loads(r.read().decode())
 
 
+_active_resp = None
+
+
+def abort_stream():
+    """Cierra la respuesta HTTP activa para desbloquear chat_stream."""
+    global _active_resp
+    r = _active_resp
+    _active_resp = None
+    if r is not None:
+        try:
+            r.close()
+        except Exception:
+            pass
+
+
 def backend_status(backend="ollama"):
     cfg = BACKENDS.get(backend, BACKENDS["ollama"])
     try:
@@ -60,10 +75,15 @@ def chat_stream(backend, model, messages, options=None):
                                      data=json.dumps(payload).encode(),
                                      headers={"Content-Type": "application/json"})
         with urllib.request.urlopen(req, timeout=600) as r:
-            for raw in r:
-                raw = raw.strip()
-                if raw:
-                    yield json.loads(raw.decode())
+            global _active_resp
+            _active_resp = r
+            try:
+                for raw in r:
+                    raw = raw.strip()
+                    if raw:
+                        yield json.loads(raw.decode())
+            finally:
+                _active_resp = None
         return
 
     opts = dict(options)
@@ -81,7 +101,9 @@ def chat_stream(backend, model, messages, options=None):
     if key:
         req.add_header("Authorization", f"Bearer {key}")
     with urllib.request.urlopen(req, timeout=600) as r:
-        for raw in r:
+        _active_resp = r
+        try:
+            for raw in r:
             raw = raw.strip()
             if not raw or raw == b"data: [DONE]":
                 continue
@@ -98,3 +120,5 @@ def chat_stream(backend, model, messages, options=None):
                     yield {"model": model, "created_at": "",
                            "message": {"role": "assistant", "content": content},
                            "done": ch.get("finish_reason") is not None}
+        finally:
+            _active_resp = None

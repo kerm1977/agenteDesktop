@@ -27,6 +27,7 @@ class ChatWorker(QThread):
 
     def request_stop(self):
         self._stop = True
+        backends.abort_stream()
 
     def run(self):
         try:
@@ -52,6 +53,8 @@ class ChatWorker(QThread):
                         buf += delta
                         self.token.emit(delta)
             except Exception as e:
+                if self._stop:
+                    break
                 consola.log_error("backend", repr(e))
                 if not buf:
                     raise

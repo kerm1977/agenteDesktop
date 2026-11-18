@@ -259,10 +259,11 @@ class ChatPanel(QWidget):
                 self._voz.finished.connect(self._voz.deleteLater)
                 self._voz.start()
                 self.wave.start()
-            elif self._voz:
-                self._voz.stop()  # _voz_termino limpia al finalizar
             else:
                 self.wave.stop()
+                self.btn_mic.setChecked(False)
+                if self._voz:
+                    self._voz.stop()  # _voz_termino limpia al finalizar
         except Exception as e:
             consola.log_error("voz", repr(e))
             self.add_system("🎤 Error: " + str(e))
