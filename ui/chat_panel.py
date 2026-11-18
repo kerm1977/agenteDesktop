@@ -153,7 +153,11 @@ class ChatPanel(QWidget):
         lay.addWidget(self._build_composer())
 
         self.btn_send.clicked.connect(self._emit_send)
+        self.btn_send.clicked.connect(
+            lambda: consola.log_info("ui", "botón Enviar"))
         self.btn_stop.clicked.connect(self.stop_requested)
+        self.btn_stop.clicked.connect(
+            lambda: consola.log_info("ui", "botón Detener"))
         self.input.installEventFilter(self)
 
     # ---------- composer ----------
@@ -189,6 +193,7 @@ class ChatPanel(QWidget):
         from ui import iconos
         self.btn_attach.setIcon(iconos.icon("plus", 14))
         self.btn_attach.setIconSize(QSize(14, 14))
+        self.btn_attach.setToolTip("Adjuntar archivos o carpeta")
         self.btn_attach.setPopupMode(QToolButton.InstantPopup)
         self.btn_attach.setStyleSheet(
             "QToolButton{background:#303038;color:#ddd;border:1px solid #42424c;"
@@ -201,10 +206,14 @@ class ChatPanel(QWidget):
         menu.addAction("Adjuntar carpeta",
                        lambda: self.attach_requested.emit("folder"))
         self.btn_attach.setMenu(menu)
+        self.btn_attach.clicked.connect(
+            lambda: consola.log_info("ui", "botón Adjuntar"))
         row.addWidget(self.btn_attach)
 
         self.cmb_backend = QComboBox()
+        self.cmb_backend.setToolTip("Motor de modelos")
         self.cmb_model = QComboBox()
+        self.cmb_model.setToolTip("Modelo a usar")
         self.cmb_model.setMinimumWidth(160)
         for c in (self.cmb_backend, self.cmb_model):
             c.setStyleSheet("QComboBox{background:#303038;color:#ddd;"
@@ -232,11 +241,14 @@ class ChatPanel(QWidget):
             "border-radius:12px;padding:5px 12px;}"
             "QPushButton:checked{background:#a33d3d;color:#fff;}")
         self.btn_mic.clicked.connect(self._toggle_mic)
+        self.btn_mic.clicked.connect(
+            lambda: consola.log_info("ui", "botón Micrófono"))
         row.addWidget(self.btn_mic)
         self._voz = None
 
         self.btn_stop = QPushButton(iconos.icon("stop", 14), "")
         self.btn_stop.setIconSize(QSize(14, 14))
+        self.btn_stop.setToolTip("Detener respuesta")
         self.btn_stop.setEnabled(False)
         self.btn_stop.setStyleSheet(
             "QPushButton{background:#6e3636;color:#eee;border:none;"
@@ -244,6 +256,7 @@ class ChatPanel(QWidget):
             "QPushButton:disabled{background:#303038;color:#777;}")
         self.btn_send = QPushButton(iconos.icon("send", 14), "")
         self.btn_send.setIconSize(QSize(14, 14))
+        self.btn_send.setToolTip("Enviar (Enter)")
         self.btn_send.setStyleSheet(
             "QPushButton{background:#2e7fb8;color:white;border:none;"
             "border-radius:12px;padding:5px 14px;font-size:14px;}"

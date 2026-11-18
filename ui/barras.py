@@ -3,7 +3,12 @@ from PySide6.QtCore import QSize, Qt
 from PySide6.QtGui import QAction, QActionGroup, QKeySequence
 from PySide6.QtWidgets import (QLabel, QSizePolicy, QToolBar, QWidget)
 
+from core import consola
 from ui import iconos, ota_ui
+
+
+def _ev(name):
+    return lambda: consola.log_info("ui", "botón " + name)
 
 
 def build_rail(win):
@@ -23,7 +28,9 @@ def build_rail(win):
         act.setToolTip(name)
         act.setCheckable(True)
         act.triggered.connect(
-            lambda _c, i=idx: win._stack.setCurrentIndex(i))
+            lambda _c, i=idx, n=name: (
+                consola.log_info("ui", "panel " + n),
+                win._stack.setCurrentIndex(i)))
         grp.addAction(act)
         rail.addAction(act)
         if idx == 0:
@@ -35,6 +42,7 @@ def build_rail(win):
     act_editor.setCheckable(True)
     act_editor.setChecked(True)
     act_editor.toggled.connect(win.editor.setVisible)
+    act_editor.toggled.connect(lambda _c: _ev("Editor")())
     rail.addAction(act_editor)
 
     spacer = QWidget()
@@ -43,6 +51,7 @@ def build_rail(win):
     act_hw = QAction(iconos.icon("monitor", 22), "", win)
     act_hw.setToolTip("Revisar requerimientos del equipo")
     act_hw.triggered.connect(win._scan_hw)
+    act_hw.triggered.connect(lambda _c: _ev("Equipo")())
     rail.addAction(act_hw)
     return rail
 
@@ -56,32 +65,38 @@ def build_toolbar(win):
 
     act_new = QAction(iconos.icon("newfolder", 16), "Nuevo proyecto", win)
     act_new.triggered.connect(win._nuevo_proyecto)
+    act_new.triggered.connect(_ev("Nuevo proyecto"))
     tb.addAction(act_new)
 
     act_dir = QAction(iconos.icon("folder", 16), "Abrir proyecto", win)
     act_dir.triggered.connect(win._pick_dir)
+    act_dir.triggered.connect(_ev("Abrir proyecto"))
     tb.addAction(act_dir)
 
     act_save = QAction(iconos.icon("save", 16), "", win)
     act_save.setToolTip("Guardar (Ctrl+S)")
     act_save.setShortcut(QKeySequence.Save)
     act_save.triggered.connect(win.editor.editor.save)
+    act_save.triggered.connect(_ev("Guardar"))
     tb.addAction(act_save)
     tb.addSeparator()
 
     act_console = QAction(iconos.icon("terminal", 16), "Consola", win)
     act_console.triggered.connect(
         lambda: win._dock.setVisible(not win._dock.isVisible()))
+    act_console.triggered.connect(_ev("Consola"))
     tb.addAction(act_console)
 
     act_self = QAction(iconos.icon("bot", 16), "Mejorar agente", win)
     act_self.setCheckable(True)
     act_self.toggled.connect(win._toggle_self_mode)
+    act_self.toggled.connect(lambda _c: _ev("Mejorar agente")())
     tb.addAction(act_self)
 
     act_ota = QAction(iconos.icon("refresh", 16), "Actualizar", win)
     act_ota.triggered.connect(
         lambda: ota_ui.check_and_prompt(win, win.chat, manual=True))
+    act_ota.triggered.connect(_ev("Actualizar"))
     tb.addAction(act_ota)
 
     tb.addWidget(QLabel("   "))

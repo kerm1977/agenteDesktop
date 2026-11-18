@@ -52,8 +52,7 @@ _SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
         'stroke-linejoin="round">{paths}</svg>')
 
 
-def icon(name, size=20, color="#d0d0d6"):
-    """QIcon plano de `name` (Lucide) a `size` px, centrado."""
+def _pixmap(name, size, color):
     svg = _SVG.format(c=color, paths=ICONS.get(name, ICONS["file"]))
     renderer = QSvgRenderer(QByteArray(svg.encode()))
     pm = QPixmap(size, size)
@@ -62,4 +61,12 @@ def icon(name, size=20, color="#d0d0d6"):
     p.setRenderHint(QPainter.Antialiasing)
     renderer.render(p)
     p.end()
-    return QIcon(pm)
+    return pm
+
+
+def icon(name, size=20, color="#d0d0d6", hover="#4aa3e0"):
+    """QIcon plano de `name` (Lucide) a `size` px; cambia de color al hover."""
+    ic = QIcon(_pixmap(name, size, color))
+    if hover:
+        ic.addPixmap(_pixmap(name, size, hover), QIcon.Active)
+    return ic
