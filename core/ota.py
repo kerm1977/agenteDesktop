@@ -12,7 +12,7 @@ MANIFEST_URL = ("https://raw.githubusercontent.com/kerm1977/agenteDesktop/"
 RAW_BASE = MANIFEST_URL.rsplit("/", 1)[0] + "/"
 
 SKIP_PREFIXES = (".update/", ".git/", ".venv/", "modelos/", "__pycache__/",
-                 "adjuntos/", ".agente/")
+                 "adjuntos/", ".agente/", "voz/")
 SKIP_SUFFIXES = (".db", ".log", ".pyc")
 
 
