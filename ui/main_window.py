@@ -125,6 +125,11 @@ class MainWindow(QMainWindow):
     def _fill_backends(self):
         for key, cfg in backends.BACKENDS.items():
             self.chat.cmb_backend.addItem(cfg["nombre"], key)
+        prev = db.get_cfg("ultimo_backend")
+        if prev is not None:
+            i = self.chat.cmb_backend.findData(prev)
+            if i >= 0:
+                self.chat.cmb_backend.setCurrentIndex(i)
         self.chat.cmb_backend.currentIndexChanged.connect(self._load_models)
         self._load_models()
 
@@ -140,7 +145,19 @@ class MainWindow(QMainWindow):
         self.chat.cmb_model.currentTextChanged.connect(
             self.models._select_model)
         self.chat.cmb_model.currentTextChanged.connect(self._model_rule)
+        self.chat.cmb_model.currentTextChanged.connect(self._save_model_sel)
+        prev_voz = db.get_cfg("ultima_voz")
+        if prev_voz:
+            i = self.chat.cmb_voz.findText(prev_voz)
+            if i >= 0:
+                self.chat.cmb_voz.setCurrentIndex(i)
+        self.chat.cmb_voz.currentTextChanged.connect(
+            lambda t: db.set_cfg("ultima_voz", t))
         self._last_text = ""
+
+    def _save_model_sel(self, text):
+        if text and not text.startswith("("):
+            db.set_cfg("ultimo_modelo", text)
 
     def _model_rule(self, text):
         if text and not text.startswith("("):
@@ -240,9 +257,14 @@ class MainWindow(QMainWindow):
 
     def _load_models(self):
         backend = self.chat.cmb_backend.currentData()
+        if backend:
+            db.set_cfg("ultimo_backend", backend)
         models = backends.list_models(backend)
         self.chat.cmb_model.clear()
         self.chat.cmb_model.addItems(models or ["(sin modelos)"])
+        prev = db.get_cfg("ultimo_modelo")
+        if prev and prev in (models or []):
+            self.chat.cmb_model.setCurrentText(prev)
 
     # ---------- chat ----------
     def _send(self, text, attachments):
