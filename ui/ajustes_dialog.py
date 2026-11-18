@@ -80,6 +80,16 @@ class AjustesDialog(QDialog):
         self._threads.setToolTip(f"Tu CPU tiene {cpu} hilos disponibles")
         form.addRow(f"Hilos de CPU (1–{cpu}):", self._threads)
 
+        self._detalle = QComboBox()
+        self._detalle.addItems(["Resumida (corta)", "Media (normal)",
+                                "Explicativa (con detalle)"])
+        self._detalle.setToolTip(
+            "Qué tan desarrolladas serán las respuestas del modelo")
+        nivel = db.get_cfg("detalle:" + model, "media")
+        self._detalle.setCurrentIndex(
+            {"resumida": 0, "media": 1, "explicativa": 2}.get(nivel, 1))
+        form.addRow("Detalle de respuesta:", self._detalle)
+
         lay.addLayout(form)
         self._auto = QCheckBox("Auto-ajustar velocidad (reduce contexto "
                                "y respuesta si el modelo va lento)")
@@ -179,4 +189,7 @@ class AjustesDialog(QDialog):
                            p.get("temperature", 0.7))
         db.set_cfg("num_thread", self._threads.value())
         db.set_cfg("auto_tune", "1" if self._auto.isChecked() else "0")
+        db.set_cfg("detalle:" + self._model,
+                   ("resumida", "media", "explicativa")[
+                       self._detalle.currentIndex()])
         self.accept()

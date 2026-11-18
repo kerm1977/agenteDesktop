@@ -258,8 +258,9 @@ class MainWindow(QMainWindow):
         self._last_text = text
         self.chat.add_user(text or "(adjuntos)")
         self.models.save_prefs(model)
-        system = prompts.build_system(self.editor.context(), self._root,
-                                      self._self_mode)
+        system = prompts.build_system(
+            self.editor.context(), self._root, self._self_mode,
+            detalle=db.get_cfg("detalle:" + model, "media"))
         historial = [m for m in self._messages
                      if m["role"] != "system"][-8:]
         self._messages = ([{"role": "system", "content": system}]

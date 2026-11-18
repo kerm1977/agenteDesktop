@@ -29,8 +29,17 @@ SYSTEM_SELF = ("\n\nMODO MEJORAR AGENTE: trabajas ÚNICAMENTE sobre el código "
                "usuario.")
 
 
-def build_system(editor_ctx, root, self_mode=False):
+DETALLE = {
+    "resumida":   "Responde CORTO: lo mínimo necesario, sin relleno.",
+    "media":      "Responde con longitud normal, directo al punto.",
+    "explicativa": "Responde con DETALLE completo: explica el porqué, "
+                   "pasos, alternativas y ejemplos.",
+}
+
+
+def build_system(editor_ctx, root, self_mode=False, detalle="media"):
     system = SYSTEM_BASE
+    system += "\n" + DETALLE.get(detalle, DETALLE["media"])
     if self_mode:
         system += SYSTEM_SELF
     if editor_ctx and not self_mode:
