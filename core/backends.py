@@ -111,7 +111,7 @@ def chat_stream(backend, model, messages, options=None):
     if cfg["tipo"] == "ollama":
         payload = {"model": model, "messages": messages,
                    "stream": True, "options": options,
-                   "keep_alive": "-1"}  # nunca descarga el modelo de RAM
+                   "keep_alive": "24h"}  # el modelo se queda en RAM
         conn = None
         try:
             conn, resp = _open_stream(cfg, "/api/chat", payload)
