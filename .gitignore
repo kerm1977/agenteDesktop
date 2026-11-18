@@ -10,3 +10,4 @@ adjuntos/
 dist/
 build/
 *.spec
+_manifest.json 
