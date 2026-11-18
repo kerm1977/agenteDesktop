@@ -112,10 +112,14 @@ class MainWindow(QMainWindow):
         memoria.load(root)
 
     def _pick_dir(self):
-        d = QFileDialog.getExistingDirectory(self, "Carpeta del proyecto",
+        d = QFileDialog.getExistingDirectory(self, "Abrir proyecto (carpeta)",
                                              self._root)
         if d:
             self.set_root(d)
+            self._stack.setCurrentIndex(0)
+            self.editor._label.setText(
+                f"  📁 {os.path.basename(d)}  ›  (elige un archivo del árbol)")
+            self.chat.add_system("Proyecto abierto: " + d)
 
     def _nuevo_proyecto(self):
         base = os.path.join(os.path.expanduser("~"), "proyectos")

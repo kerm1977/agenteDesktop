@@ -158,6 +158,11 @@ class ModelsPanel(QWidget):
         row.addWidget(self._filtro)
         lay.addLayout(row)
 
+        self._buscar = QLineEdit()
+        self._buscar.setPlaceholderText("🔍 Buscar modelos gratuitos…")
+        self._buscar.textChanged.connect(self._render_catalogo)
+        lay.addWidget(self._buscar)
+
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
         self._cat = QWidget()
@@ -217,8 +222,12 @@ class ModelsPanel(QWidget):
                 it.widget().deleteLater()
         installed = set(backends.list_models("ollama"))
         filtro = self._filtro.currentText()
+        texto = self._buscar.text().strip().lower()
         for info in catalogo.CATALOGO:
             if filtro != "todos" and info["peso"] != filtro:
+                continue
+            if texto and texto not in info["nombre"].lower() \
+                    and texto not in info["tag"].lower():
                 continue
             row = ModelRow(info, self._hw)
             if info["tag"] in installed:

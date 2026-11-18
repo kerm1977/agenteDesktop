@@ -1,4 +1,5 @@
 """Editor de código nativo con números de línea y resaltado básico."""
+import os
 import re
 
 from PySide6.QtCore import QRect, QSize, Qt, Signal
@@ -153,7 +154,8 @@ class EditorPanel(QWidget):
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
         self._label = QLabel("  Sin archivo — abre uno en el árbol")
-        self._label.setStyleSheet("background:#2c2c32;color:#d4d4da;padding:4px;")
+        self._label.setStyleSheet("background:#2c2c32;color:#d4d4da;"
+                                  "padding:4px;font-size:11px;")
         self.editor = CodeEditor()
         lay.addWidget(self._label)
         lay.addWidget(self.editor, 1)
@@ -162,9 +164,17 @@ class EditorPanel(QWidget):
     def open_file(self, path):
         try:
             self.editor.load_file(path)
-            self._label.setText("  " + path)
+            self._label.setText("  " + self._crumb(path))
         except OSError as e:
             self._label.setText("  Error: " + str(e))
+
+    def _crumb(self, path):
+        root = self._project_root
+        if root and os.path.normcase(path).startswith(
+                os.path.normcase(root + os.sep)):
+            rel = os.path.relpath(path, root)
+            return f"📁 {os.path.basename(root)}  ›  {rel.replace(os.sep, ' › ')}"
+        return "  " + path
 
     def context(self):
         """Contexto del editor para el chat."""
