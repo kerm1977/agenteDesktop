@@ -37,6 +37,15 @@ class TreePanel(QWidget):
         self._model.setNameFilters(["*"])
         self._view.expand(idx)
 
+    def reveal(self, path):
+        """Expande y selecciona path en el árbol (creado tras set_root)."""
+        idx = self._model.index(path)
+        if not idx.isValid():
+            return
+        self._view.expand(idx)
+        self._view.setCurrentIndex(idx)
+        self._view.scrollTo(idx)
+
     def _open(self, index):
         path = self._model.filePath(index)
         if os.path.isfile(path):

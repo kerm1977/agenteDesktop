@@ -140,6 +140,7 @@ class MainWindow(QMainWindow):
         else:
             d = QFileDialog.getExistingDirectory(self, "Adjuntar carpeta")
             paths = [d] if d else []
+        ultimo = None
         for p in paths:
             target = os.path.join(dest, os.path.basename(p))
             try:
@@ -149,8 +150,12 @@ class MainWindow(QMainWindow):
                     shutil.copy2(p, target)
                 self.chat.add_attachment(target)
                 consola.log_info("adjuntos", "copiado " + target)
+                ultimo = target
             except OSError as e:
                 consola.log_error("adjuntos", repr(e))
+        if ultimo:
+            self._stack.setCurrentIndex(0)
+            self.tree.reveal(ultimo)
 
     def _toggle_self_mode(self, on):
         self._self_mode = on
