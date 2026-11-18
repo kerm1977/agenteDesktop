@@ -64,11 +64,24 @@ def scan():
             datos["gpu"].append({"nombre": name.strip(), "vram_gb": 0.0,
                                  "driver": ""})
 
-    raw = _ps("(Get-PSDrive -Name C).Free")
-    try:
-        datos["disco_libre_gb"] = round(int(raw) / (1024 ** 3), 1)
-    except ValueError:
-        pass
+    raw = _ps("[System.IO.DriveInfo]::GetDrives() | "
+              "Where-Object { $_.IsReady } | ForEach-Object { "
+              "$_.Name + '|' + [math]::Round($_.AvailableFreeSpace/1GB,1) "
+              "+ '|' + [math]::Round($_.TotalSize/1GB,1) }")
+    datos["discos"] = []
+    for linea in raw.splitlines():
+        partes = linea.strip().split("|")
+        if len(partes) == 3:
+            try:
+                datos["discos"].append({
+                    "unidad": partes[0],
+                    "libre_gb": float(partes[1]),
+                    "total_gb": float(partes[2])})
+            except ValueError:
+                pass
+    datos["disco_libre_gb"] = next(
+        (d["libre_gb"] for d in datos["discos"]
+         if d["unidad"].startswith("C")), 0.0)
 
     datos["os"] = _ps("(Get-CimInstance Win32_OperatingSystem | "
                       "Select-Object -First 1) | ForEach-Object "
@@ -95,7 +108,12 @@ def reporte(datos):
         f"GPU:\n{gpus}\n"
         f"VRAM máxima: {datos['vram_max_gb']} GB "
         "(integrada = usa RAM del sistema)\n"
-        f"Disco libre en C: {datos['disco_libre_gb']} GB\n"
+        f"Discos:\n" + "\n".join(
+            f"  - {d['unidad']} libre {d['libre_gb']} GB / "
+            f"total {d['total_gb']} GB"
+            for d in datos.get("discos", [])
+            or [{"unidad": "C:", "libre_gb": datos['disco_libre_gb'],
+                 "total_gb": "?"}]) + "\n"
         f"Nota: sin GPU dedicada, los modelos de IA corren por CPU — "
         "ideal ≤3B (ligero), usable 7–9B (medio, lento).")
 
