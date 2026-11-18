@@ -70,34 +70,54 @@ class ModelRow(QFrame):
     def __init__(self, info, hw):
         super().__init__()
         self.info = info
+        self.setCursor(Qt.PointingHandCursor)
         compat = hwinfo.compatible(info, hw)
         mark = "✓" if compat else ("✗" if compat is False else "·")
-        lay = QHBoxLayout(self)
-        lay.setContentsMargins(8, 5, 8, 5)
-        txt = (f"<b>{info['nombre']}</b>  <span style='color:#888'>"
-               f"{info['peso']} · {info['gb']} GB · RAM≥{info['ram_gb']} GB · "
-               f"ctx {info['ctx']//1024}k</span>")
-        lbl = QLabel(txt)
-        lbl.setStyleSheet("font-size:11px;")
-        lay.addWidget(lbl, 1)
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(10, 7, 10, 7)
+        lay.setSpacing(3)
+
+        top = QHBoxLayout()
+        lbl = QLabel(f"<b>{info['nombre']}</b>")
+        lbl.setStyleSheet("font-size:13px;color:#e8e8e8;")
+        top.addWidget(lbl, 1)
         self._badge = QLabel(mark)
         self._badge.setStyleSheet(
-            "color:" + ("#4ec9b0" if compat else "#e06c60") + ";")
-        lay.addWidget(self._badge)
-        self.bar = QProgressBar()
-        self.bar.setFixedWidth(90)
-        self.bar.setVisible(False)
-        lay.addWidget(self.bar)
-        self.btn = QPushButton("Descargar")
-        self.btn.setFixedWidth(80)
-        self.btn.setStyleSheet("font-size:11px;padding:3px 6px;")
+            "font-size:14px;color:"
+            + ("#4ec9b0" if compat else "#e06c60") + ";")
+        top.addWidget(self._badge)
+        self.btn = QPushButton("⬇ Descargar")
+        self.btn.setStyleSheet("font-size:12px;padding:5px 12px;"
+                               "background:#0e639c;")
         self.btn.clicked.connect(
             lambda: self.pull_requested.emit(info["tag"], self))
-        lay.addWidget(self.btn)
-        self.setStyleSheet("QFrame{border-bottom:1px solid #232326;}")
+        top.addWidget(self.btn)
+        lay.addLayout(top)
+
+        specs = (f"{info['peso']} · {info['gb']} GB · "
+                 f"RAM ≥ {info['ram_gb']} GB · contexto {info['ctx']//1024}k")
+        sl = QLabel(specs)
+        sl.setStyleSheet("font-size:12px;color:#8a8a8a;")
+        lay.addWidget(sl)
+
+        self.bar = QProgressBar()
+        self.bar.setMinimumHeight(14)
+        self.bar.setVisible(False)
+        lay.addWidget(self.bar)
+        self.setStyleSheet(
+            "QFrame{border-bottom:1px solid #26262a;}"
+            "QFrame:hover{background:#1e1e22;}")
+
+    def mousePressEvent(self, event):
+        if self.btn.isEnabled():
+            self.pull_requested.emit(self.info["tag"], self)
+        self.selected.emit(self.info["tag"])
+        super().mousePressEvent(event)
 
     def set_installed(self):
-        self.btn.setText("✔")
+        self.btn.setText("✔ Instalado")
+        self.btn.setStyleSheet("font-size:12px;padding:5px 12px;"
+                               "background:#234d35;color:#7fdca8;")
         self.btn.setEnabled(False)
         self.bar.setVisible(False)
 
