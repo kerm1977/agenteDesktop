@@ -274,6 +274,8 @@ class MainWindow(QMainWindow):
         self._worker.finished_text.connect(self._chat_done)
         self._worker.failed.connect(self._chat_failed)
         self._worker.stat.connect(self.chat.add_rule)
+        self._worker.perf.connect(lambda dt, ntok, m=model:
+                                  self._auto_tune(m, dt, ntok))
         self._worker.start()
 
     def _stop(self):
@@ -282,6 +284,27 @@ class MainWindow(QMainWindow):
         self.chat.add_system("El usuario detuvo la respuesta.")
         if self._last_text and not self.chat.input.toPlainText().strip():
             self.chat.input.setPlainText(self._last_text)
+
+    def _auto_tune(self, model, dt, ntok):
+        """Si el modelo va lento (<4 tok/s), reduce contexto/respuesta."""
+        if dt <= 0 or db.get_cfg("auto_tune", "1") != "1":
+            return
+        vel = ntok / dt
+        if vel >= 4 or ntok < 20:
+            return
+        p = db.get_model_prefs(model)
+        npred = p["num_predict"]
+        npred = max(256, npred // 2) if npred > 0 else 512
+        nctx = max(1024, min(int(p["num_ctx"]) // 2, 2048))
+        db.set_model_prefs(model, "custom", nctx, npred,
+                           p["temperature"])
+        consola.log_info(
+            "auto-ajuste",
+            f"{model} lento ({vel:.1f} tok/s) → ctx {nctx}, "
+            f"max {npred}")
+        self.chat.add_rule(
+            f"auto-ajuste: {model} iba a {vel:.1f} tok/s — reduje "
+            f"contexto y respuesta para ir más rápido")
 
     def _chat_done(self, text):
         self.chat.end_stream()

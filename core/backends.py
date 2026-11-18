@@ -110,7 +110,8 @@ def chat_stream(backend, model, messages, options=None):
     options = options or {}
     if cfg["tipo"] == "ollama":
         payload = {"model": model, "messages": messages,
-                   "stream": True, "options": options}
+                   "stream": True, "options": options,
+                   "keep_alive": "30m"}
         conn = None
         try:
             conn, resp = _open_stream(cfg, "/api/chat", payload)

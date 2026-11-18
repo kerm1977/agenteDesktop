@@ -1,18 +1,39 @@
 """Diálogo de Rendimiento: velocidad, contexto, tokens e hilos del modelo."""
 import os
 
-from PySide6.QtCore import Qt
-from PySide6.QtWidgets import (QComboBox, QDialog, QDialogButtonBox,
-                               QFormLayout, QLabel, QSpinBox,
-                               QVBoxLayout)
+from PySide6.QtCore import Qt, QThread, Signal
+from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog,
+                               QDialogButtonBox, QFormLayout, QLabel,
+                               QPushButton, QSpinBox, QVBoxLayout)
 
-from core import db
+from core import backends, bench, db
 
 PRESETS = {
     "Rápida":      {"num_ctx": 2048, "num_predict": 512,  "temperature": 0.4},
     "Equilibrada": {"num_ctx": 4096, "num_predict": 1024, "temperature": 0.7},
     "Avanzada":    {"num_ctx": 8192, "num_predict": 2048, "temperature": 0.8},
 }
+
+
+class _TestWorker(QThread):
+    """Prueba de latencia: un modelo o todos los instalados."""
+    step = Signal(str)
+    done = Signal(list)   # [(model, ok, ms)]
+
+    def __init__(self, models):
+        super().__init__()
+        self._models = models
+
+    def run(self):
+        res = []
+        for m in self._models:
+            self.step.emit("Midiendo " + m + "…")
+            ok, ms, err = bench.ping_model("ollama", m)
+            db.save_bench(m, ok, ms)
+            res.append((m, ok, ms))
+            self.step.emit(
+                m + ": " + (f"{ms / 1000:.1f} s" if ok else f"falla: {err}"))
+        self.done.emit(res)
 
 
 class AjustesDialog(QDialog):
@@ -60,9 +81,27 @@ class AjustesDialog(QDialog):
         form.addRow(f"Hilos de CPU (1–{cpu}):", self._threads)
 
         lay.addLayout(form)
+        self._auto = QCheckBox("Auto-ajustar velocidad (reduce contexto "
+                               "y respuesta si el modelo va lento)")
+        self._auto.setChecked(db.get_cfg("auto_tune", "1") == "1")
+        lay.addWidget(self._auto)
+
         lay.addWidget(QLabel(
             "Más contexto/tokens = respuestas más largas pero más lentas.\n"
             "Los hilos se aplican a todos los modelos (Ollama)."))
+
+        row = QVBoxLayout()
+        self._lbl_test = QLabel("Prueba de rendimiento: sin ejecutar")
+        self._lbl_test.setWordWrap(True)
+        row.addWidget(self._lbl_test)
+        self.btn_test = QPushButton("Probar este modelo")
+        self.btn_test.clicked.connect(self._test_one)
+        row.addWidget(self.btn_test)
+        self.btn_all = QPushButton("Probar todos los instalados")
+        self.btn_all.clicked.connect(self._test_all)
+        row.addWidget(self.btn_all)
+        lay.addLayout(row)
+
         btns = QDialogButtonBox(QDialogButtonBox.Save
                                 | QDialogButtonBox.Cancel)
         btns.accepted.connect(self._save)
@@ -93,6 +132,45 @@ class AjustesDialog(QDialog):
         self._ctx.blockSignals(False)
         self._pred.blockSignals(False)
 
+    # ---------- prueba de rendimiento ----------
+    def _test_one(self):
+        self._start_test([self._model])
+
+    def _test_all(self):
+        models = backends.list_models("ollama")
+        if not models:
+            self._lbl_test.setText("Sin modelos instalados.")
+            return
+        self._start_test(models)
+
+    def _start_test(self, models):
+        self.btn_test.setEnabled(False)
+        self.btn_all.setEnabled(False)
+        self._t = _TestWorker(models)
+        self._t.step.connect(self._lbl_test.setText)
+        self._t.done.connect(self._test_done)
+        self._t.start()
+
+    def _test_done(self, res):
+        self.btn_test.setEnabled(True)
+        self.btn_all.setEnabled(True)
+        ok = sorted([x for x in res if x[1]], key=lambda x: x[2])
+        mal = [x[0] for x in res if not x[1]]
+        if len(res) == 1:
+            m, okk, ms = res[0]
+            self._lbl_test.setText(
+                m + ": " + (f"{ms / 1000:.1f} s por respuesta"
+                            if okk else f"falla: {ms}"))
+            return
+        lento = ok[-1] if ok else None
+        texto = " · ".join(f"{m} {ms / 1000:.0f}s" for m, _, ms in ok)
+        if lento:
+            texto += (f"\nMás lento: {lento[0]} ({lento[2] / 1000:.1f} s) "
+                      "— candidato a eliminar en equipos lentos")
+        if mal:
+            texto += "\nSin respuesta: " + ", ".join(mal)
+        self._lbl_test.setText(texto)
+
     def _save(self):
         p = PRESETS.get(self._preset.currentText(),
                         {"temperature": 0.7})
@@ -100,4 +178,5 @@ class AjustesDialog(QDialog):
                            self._ctx.value(), self._pred.value(),
                            p.get("temperature", 0.7))
         db.set_cfg("num_thread", self._threads.value())
+        db.set_cfg("auto_tune", "1" if self._auto.isChecked() else "0")
         self.accept()

@@ -28,6 +28,7 @@ class ChatWorker(QThread):
     finished_text = Signal(str)
     failed = Signal(str)
     stat = Signal(str)
+    perf = Signal(float, int)   # segundos, tokens
 
     def __init__(self, backend, model, messages, root, options=None):
         super().__init__()
@@ -107,9 +108,12 @@ class ChatWorker(QThread):
                                    "content": "Resultados de herramientas:\n\n"
                                               + "\n\n".join(results)})
         dt = time.monotonic() - t0
+        vel = ntok / dt if dt > 0 else 0
         self.stat.emit(
             f"{self._model} · respuesta en {dt:.1f} s · {ntok} tokens"
+            f" · {vel:.1f} tok/s"
             + (f" · primer token {first - t0:.1f} s" if first else ""))
+        self.perf.emit(dt, ntok)
         self.finished_text.emit(full_reply.strip())
 
     def _run_call(self, call):
