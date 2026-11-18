@@ -54,6 +54,7 @@ class MainWindow(QMainWindow):
         self.models = ModelsPanel()
         self.editor = EditorPanel()
         self.chat = ChatPanel()
+        self.proyecto_tree = TreePanel()  # árbol del proyecto, junto al IDE
 
         self._stack = QStackedWidget()
         self._stack.addWidget(self.tree)
@@ -64,8 +65,10 @@ class MainWindow(QMainWindow):
         split = QSplitter(Qt.Horizontal)
         split.addWidget(self._stack)
         split.addWidget(self.chat)
+        split.addWidget(self.proyecto_tree)
         split.addWidget(self.editor)
-        split.setSizes([260, 620, 460])
+        split.setSizes([230, 540, 240, 430])
+        self._split = split
         split.setCollapsible(0, False)
         self.setCentralWidget(split)
 
@@ -96,6 +99,7 @@ class MainWindow(QMainWindow):
 
     def _wire(self):
         self.tree.file_opened.connect(self.editor.open_file)
+        self.proyecto_tree.file_opened.connect(self.editor.open_file)
         self.editor.file_saved.connect(
             lambda p: consola.log_info("editor", "guardado " + p))
         self.chat.send_requested.connect(self._send)
@@ -108,6 +112,7 @@ class MainWindow(QMainWindow):
     def set_root(self, root):
         self._root = root
         self.tree.set_root(root)
+        self.proyecto_tree.set_root(root)
         self.editor.set_root(root)
         memoria.load(root)
 
@@ -156,6 +161,12 @@ class MainWindow(QMainWindow):
         if ultimo:
             self._stack.setCurrentIndex(0)
             self.tree.reveal(ultimo)
+            if os.path.isdir(ultimo):
+                self.proyecto_tree.set_root(ultimo)
+                self.editor.set_root(ultimo)
+                self.editor._label.setText(
+                    f"  📁 {os.path.basename(ultimo)}  ›  "
+                    "(elige un archivo del árbol)")
 
     def _toggle_self_mode(self, on):
         self._self_mode = on

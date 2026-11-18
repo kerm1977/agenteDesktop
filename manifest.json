@@ -1,5 +1,5 @@
 {
- "version": "0.1.4",
+ "version": "0.1.5",
  "files": {
   ".gitignore": "e65ae1321f1191bc50143f027a6b826ae57a3d183b9c914de40a97412f943069",
   "app.py": "ce9c35fef59f98bbe584394a0f87324780cab6f70110e99c76110743aca79d9c",
@@ -7,7 +7,7 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "b968b0d6616b45c608a9619fef833db0765cdb895abf0ea8a3602071e4555297",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "364c68ba9c9874e118d3107dd0d6b190efa37aaaec3e0c640dde8bfd29407f07",
+  "version.json": "5aaf8a44e005d0a28fbd95a43a475f89fd3304babd02881174b7b970517525a4",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "f476a7968b058ad8363be440e519a9b8a57fce05de899d83d84dacdc614cd057",
   "core/catalogo.py": "7f02262b18876bdada4260bdbbc1ce2bd00f6a644e679eac2ae088a8db8e9c0b",
@@ -25,7 +25,7 @@
   "ui/chat_panel.py": "7e7a2808e8bc845b3122924c79804cb23ffb1c6358addb0be4acc2dc9a03c779",
   "ui/console_panel.py": "941bcd9e0d5990cfa0e8004ba5a92e3962adc2b66c522252bba15a02a555a060",
   "ui/editor_panel.py": "6c6e1ee40e8a315b14623905a7278ff401c68f0e5c863b646089af13577e30ec",
-  "ui/main_window.py": "c473361e139a472fd5a5e8f5d32459955a2c831fe04ec29ee63d8455de76f495",
+  "ui/main_window.py": "27473e2279a881aec72507a376adb66fdf389573339e87b882d5ad2a24c05ae6",
   "ui/models_panel.py": "f52b7c643a6a1c121f29e3edf324857a24703f20fc06b9d7771d80ee90e9c9d3",
   "ui/nuevo_proyecto.py": "ab307800e57d599e405567dd9421c1ce5c70515afb1f965a494cac26da17f2b8",
   "ui/ota_ui.py": "aaad26ade2915be2ee33299183d37775120412df0f0809da11916d963663d658",
