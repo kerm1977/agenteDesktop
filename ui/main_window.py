@@ -1,16 +1,13 @@
 """Ventana principal: riel de iconos, stack lateral, chat central, editor."""
 import os
 import shutil
-import subprocess
-import sys
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtGui import QAction, QActionGroup, QKeySequence
-from PySide6.QtWidgets import (QDockWidget, QFileDialog, QLabel, QMainWindow,
-                               QMessageBox, QProgressDialog, QSplitter,
-                               QStackedWidget, QToolBar)
+from PySide6.QtWidgets import (QDockWidget, QFileDialog, QMainWindow,
+                               QSplitter, QStackedWidget)
 
-from core import backends, consola, memoria, ollama, ota, tools
+from core import backends, consola, db, memoria, ollama, prompts
+from ui import barras, ota_ui
 from ui.chat_panel import ChatPanel
 from ui.console_panel import ConsolePanel
 from ui.editor_panel import EditorPanel
@@ -19,14 +16,6 @@ from ui.tree_panel import TreePanel
 from ui.worker import ChatWorker
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
-SYSTEM_BASE = ("Eres un agente de código local. Respondes en español, breve y "
-               "preciso. " + tools.TOOLS_DOC)
-
-SYSTEM_SELF = ("\n\nMODO MEJORAR AGENTE: trabajas ÚNICAMENTE sobre el código de "
-               "la propia aplicación en " + APP_DIR + ". Respeta REGLAS.md "
-               "(archivos <250 líneas, sin CDNs). No toques proyectos del "
-               "usuario.")
 
 DARK = ("QMainWindow,QWidget{background:#131314;color:#d4d4d4;}"
         "QToolBar{background:#1b1b1d;border:none;spacing:4px;padding:4px;}"
@@ -49,7 +38,6 @@ class MainWindow(QMainWindow):
         self._self_mode = False
         self._root = os.getcwd()
 
-        # --- paneles ---
         self.tree = TreePanel()
         self.models = ModelsPanel()
         self.editor = EditorPanel()
@@ -75,78 +63,18 @@ class MainWindow(QMainWindow):
         self.addDockWidget(Qt.BottomDockWidgetArea, self._dock)
         self._dock.hide()
 
-        self._build_rail()
-        self._build_toolbar()
+        barras.build_rail(self)
+        barras.build_toolbar(self)
         self._fill_backends()
         self._wire()
 
         QTimer.singleShot(600, self._check_ollama)
-        QTimer.singleShot(2500, self._ota_check)
+        QTimer.singleShot(2500, lambda: ota_ui.check_and_prompt(
+            self, self.chat))
 
-    # ---------- riel lateral ----------
-    def _build_rail(self):
-        rail = QToolBar("Secciones")
-        rail.setMovable(False)
-        rail.setOrientation(Qt.Vertical)
-        rail.setFixedWidth(52)
-        self.addToolBar(Qt.LeftToolBarArea, rail)
-        grp = QActionGroup(self)
-        grp.setExclusive(True)
-        for icon, name, idx in (("📁", "Archivos", 0), ("🧠", "Modelos", 1)):
-            act = QAction(icon, self)
-            act.setToolTip(name)
-            act.setCheckable(True)
-            act.setData(idx)
-            act.triggered.connect(
-                lambda _c, i=idx: self._stack.setCurrentIndex(i))
-            grp.addAction(act)
-            rail.addAction(act)
-            if idx == 0:
-                act.setChecked(True)
-        rail.addSeparator()
-        act_editor = QAction("📝", self)
-        act_editor.setToolTip("Editor")
-        act_editor.setCheckable(True)
-        act_editor.setChecked(True)
-        act_editor.toggled.connect(self.editor.setVisible)
-        rail.addAction(act_editor)
-
-    # ---------- toolbar superior ----------
-    def _build_toolbar(self):
-        tb = QToolBar("Principal")
-        tb.setMovable(False)
-        self.addToolBar(tb)
-
-        act_dir = QAction("📂 Abrir proyecto", self)
-        act_dir.triggered.connect(self._pick_dir)
-        tb.addAction(act_dir)
-
-        act_save = QAction("💾", self)
-        act_save.setToolTip("Guardar (Ctrl+S)")
-        act_save.setShortcut(QKeySequence.Save)
-        act_save.triggered.connect(self.editor.editor.save)
-        tb.addAction(act_save)
-        tb.addSeparator()
-
-        act_console = QAction("🖥 Consola", self)
-        act_console.triggered.connect(
-            lambda: self._dock.setVisible(not self._dock.isVisible()))
-        tb.addAction(act_console)
-
-        act_self = QAction("🛠 Mejorar agente", self)
-        act_self.setCheckable(True)
-        act_self.toggled.connect(self._toggle_self_mode)
-        tb.addAction(act_self)
-
-        act_ota = QAction("⬆ Actualizar", self)
-        act_ota.triggered.connect(lambda: self._ota_check(manual=True))
-        tb.addAction(act_ota)
-
-        spacer = QLabel("   ")
-        tb.addWidget(spacer)
-        self.lbl_status = QLabel("Ollama …")
-        self.lbl_status.setStyleSheet("color:#7ab3e0;")
-        tb.addWidget(self.lbl_status)
+    def _scan_hw(self):
+        self._stack.setCurrentIndex(1)
+        self.models.scan_hardware()
 
     def _fill_backends(self):
         for key, cfg in backends.BACKENDS.items():
@@ -161,6 +89,8 @@ class MainWindow(QMainWindow):
         self.chat.send_requested.connect(self._send)
         self.chat.stop_requested.connect(self._stop)
         self.chat.attach_requested.connect(self._attach)
+        self.chat.cmb_model.currentTextChanged.connect(
+            self.models._select_model)
 
     # ---------- proyecto ----------
     def set_root(self, root):
@@ -231,40 +161,25 @@ class MainWindow(QMainWindow):
             msg += "\n\nAdjuntos (copiados en adjuntos/):\n" + "\n".join(
                 "- " + os.path.relpath(p, self._root) for p in attachments)
         self.chat.add_user(text or "(adjuntos)")
-        self._messages = ([{"role": "system",
-                            "content": self._build_system()}]
+        self.models.save_prefs(model)
+        system = prompts.build_system(self.editor.context(), self._root,
+                                      self._self_mode)
+        self._messages = ([{"role": "system", "content": system}]
                           + [m for m in self._messages
                              if m["role"] != "system"])
         self._messages.append({"role": "user", "content": msg})
+        db.log_chat("user", msg)
+        options = {k: v for k, v in db.get_model_prefs(model).items()
+                   if k in ("num_ctx", "num_predict", "temperature")}
         self.chat.start_stream()
         self.chat.set_busy(True)
-        self._worker = ChatWorker(backend, model, self._messages, self._root)
+        self._worker = ChatWorker(backend, model, self._messages, self._root,
+                                  options=options)
         self._worker.token.connect(self.chat.append_token)
         self._worker.card.connect(self.chat.add_card)
         self._worker.finished_text.connect(self._chat_done)
         self._worker.failed.connect(self._chat_failed)
         self._worker.start()
-
-    def _build_system(self):
-        system = SYSTEM_BASE
-        if self._self_mode:
-            system += SYSTEM_SELF
-        ed = self.editor.context()
-        if ed and not self._self_mode:
-            content = ed["content"]
-            cap = 6000
-            system += (f"\n\nEl usuario tiene abierto '{ed['path']}' en el "
-                       f"editor. Contenido actual (puede estar sin guardar):\n"
-                       f"```\n{content[:cap]}\n```")
-            if len(content) > cap:
-                system += "\n(Contenido truncado: usa read_file para ver más.)"
-        if self._root:
-            try:
-                system += ("\n\nMemoria del proyecto (estructura y firmas):\n"
-                           + memoria.digest(self._root, cap=4000))
-            except Exception as e:
-                consola.log_error("memoria", repr(e))
-        return system
 
     def _stop(self):
         if self._worker:
@@ -275,6 +190,7 @@ class MainWindow(QMainWindow):
         self.chat.set_busy(False)
         if text:
             self._messages.append({"role": "assistant", "content": text})
+            db.log_chat("assistant", text)
         self._worker = None
 
     def _chat_failed(self, err):
@@ -282,45 +198,3 @@ class MainWindow(QMainWindow):
         self.chat.set_busy(False)
         self.chat.add_system("Error: " + err)
         self._worker = None
-
-    # ---------- OTA ----------
-    def _ota_check(self, manual=False):
-        res = ota.check_update()
-        if not res["ok"]:
-            consola.log_error("ota", res["error"])
-            if manual:
-                self.chat.add_system("Sin conexión al repositorio de "
-                                     "actualizaciones.")
-            return
-        if not res["archivos"]:
-            if manual:
-                self.chat.add_system(
-                    f"Ya estás en la última versión ({res['actual']}).")
-            return
-        msg = (f"Hay actualización {res['actual']} → {res['remota']} "
-               f"({len(res['archivos'])} archivos). ¿Descargar y aplicar?")
-        if QMessageBox.question(self, "Actualización", msg) != QMessageBox.Yes:
-            return
-        prog = QProgressDialog("Descargando actualización…", "Cancelar", 0,
-                               len(res["archivos"]), self)
-        prog.setWindowModality(Qt.WindowModal)
-
-        def tick(i, total, rel):
-            prog.setValue(i)
-            if prog.wasCanceled():
-                raise InterruptedError()
-
-        out = ota.download_update(res["manifest"], progress=tick)
-        prog.close()
-        if out["errores"]:
-            consola.log_error("ota", "; ".join(out["errores"]))
-        ans = QMessageBox.question(
-            self, "Actualización lista",
-            "Descargada. ¿Reiniciar ahora para aplicarla?")
-        if ans == QMessageBox.Yes:
-            updater = os.path.join(APP_DIR, "core", "updater.py")
-            subprocess.Popen(
-                [sys.executable, updater, os.path.join(APP_DIR, "app.py")],
-                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
-            from PySide6.QtWidgets import QApplication
-            QApplication.quit()

@@ -5,6 +5,8 @@ modelos/
 __pycache__/
 *.pyc
 *.log
+*.db
+adjuntos/
 dist/
 build/
 *.spec
