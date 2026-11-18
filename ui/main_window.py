@@ -367,6 +367,22 @@ class MainWindow(QMainWindow):
         self._worker = None
         self._desencolar()
 
+    def _copy_chat(self):
+        """Copia toda la conversación (Tú / Agente) al portapapeles."""
+        from PySide6.QtWidgets import QApplication
+        partes = []
+        for role, content in db.chat_history():
+            quién = "Tú" if role == "user" else "Agente"
+            partes.append(f"{quién}:\n{content}")
+        if self._messages:  # incluye lo aún no persistido
+            pass
+        texto = "\n\n---\n\n".join(partes) or "(conversación vacía)"
+        QApplication.clipboard().setText(texto)
+        self.chat.add_system(
+            f"Conversación copiada ({len(partes)} mensajes) — "
+            "pégala con Ctrl+V donde quieras.")
+        consola.log_info("ui", f"chat copiado: {len(partes)} mensajes")
+
     def _desencolar(self):
         """Procesa el siguiente mensaje de la cola, en orden."""
         if self._queue:

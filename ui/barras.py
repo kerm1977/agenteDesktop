@@ -98,6 +98,12 @@ def build_toolbar(win):
     act_self.toggled.connect(lambda _c: _ev("Mejorar agente")())
     tb.addAction(act_self)
 
+    act_copy = QAction(iconos.icon("copy", 16), "Copiar chat", win)
+    act_copy.setToolTip("Copia toda la conversación al portapapeles")
+    act_copy.triggered.connect(win._copy_chat)
+    act_copy.triggered.connect(_ev("Copiar chat"))
+    tb.addAction(act_copy)
+
     act_ota = QAction(iconos.icon("refresh", 16), "Actualizar", win)
     act_ota.triggered.connect(
         lambda: ota_ui.check_and_prompt(win, win.chat, manual=True))

@@ -98,4 +98,12 @@ def log_chat(role, content):
                     (time.time(), role, content[:8000]))
 
 
+def chat_history():
+    """Todo el historial [(role, content)] en orden."""
+    with _conn() as con:
+        rows = con.execute(
+            "SELECT role, content FROM chat_log ORDER BY id").fetchall()
+    return [(r["role"], r["content"]) for r in rows]
+
+
 init()
