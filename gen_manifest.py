@@ -6,8 +6,9 @@ import sys
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 SKIP_DIRS = {".git", ".venv", "modelos", ".update", ".agente",
-             "__pycache__", "dist", "build"}
-SKIP_FILES = {"manifest.json", "gen_manifest.py"}
+             "__pycache__", "dist", "build", "adjuntos"}
+SKIP_FILES = {"manifest.json", "gen_manifest.py", "_smoke.py"}
+SKIP_EXT = (".pyc", ".log", ".db")
 
 
 def main():
@@ -16,7 +17,7 @@ def main():
     for dirpath, dirnames, filenames in os.walk(APP_DIR):
         dirnames[:] = [d for d in dirnames if d not in SKIP_DIRS]
         for name in filenames:
-            if name in SKIP_FILES or name.endswith((".pyc", ".log")):
+            if name in SKIP_FILES or name.endswith(SKIP_EXT):
                 continue
             full = os.path.join(dirpath, name)
             rel = os.path.relpath(full, APP_DIR).replace(os.sep, "/")

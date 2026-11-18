@@ -11,7 +11,9 @@ MANIFEST_URL = ("https://raw.githubusercontent.com/kerm1977/agenteDesktop/"
                 "main/manifest.json")
 RAW_BASE = MANIFEST_URL.rsplit("/", 1)[0] + "/"
 
-SKIP_PREFIXES = (".update/", ".git/", ".venv/", "modelos/", "__pycache__/")
+SKIP_PREFIXES = (".update/", ".git/", ".venv/", "modelos/", "__pycache__/",
+                 "adjuntos/", ".agente/")
+SKIP_SUFFIXES = (".db", ".log", ".pyc")
 
 
 def local_version():
@@ -20,6 +22,22 @@ def local_version():
             return json.load(f).get("version", "0.0.0")
     except (OSError, json.JSONDecodeError):
         return "0.0.0"
+
+
+def _skipped(rel):
+    return (any(rel.startswith(p) for p in SKIP_PREFIXES)
+            or rel.endswith(SKIP_SUFFIXES))
+
+
+def version_tuple(v):
+    try:
+        return tuple(int(p) for p in str(v).split("."))
+    except ValueError:
+        return (0,)
+
+
+def hay_version_nueva(local, remota):
+    return version_tuple(remota) > version_tuple(local)
 
 
 def _sha(path):
@@ -48,7 +66,7 @@ def check_update(timeout=10):
     remote_v = manifest.get("version", "?")
     pendientes = []
     for rel, sha in manifest.get("files", {}).items():
-        if any(rel.startswith(p) for p in SKIP_PREFIXES):
+        if _skipped(rel):
             continue
         local = os.path.join(APP_DIR, rel.replace("/", os.sep))
         if not os.path.exists(local) or _sha(local) != sha:
@@ -62,7 +80,7 @@ def download_update(manifest, progress=None):
     files = manifest.get("files", {})
     os.makedirs(STAGING, exist_ok=True)
     done, errores = 0, []
-    items = [r for r in files if not any(r.startswith(p) for p in SKIP_PREFIXES)]
+    items = [r for r in files if not _skipped(r)]
     for i, rel in enumerate(items):
         dest = os.path.join(STAGING, rel.replace("/", os.sep))
         try:
