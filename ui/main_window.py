@@ -48,6 +48,7 @@ class MainWindow(QMainWindow):
         self.resize(1340, 840)
         self.setStyleSheet(DARK)
         self._worker = None
+        self._queue = []          # mensajes en espera, en orden
         self._messages = []
         self._self_mode = False
         self._root = os.getcwd()
@@ -278,6 +279,13 @@ class MainWindow(QMainWindow):
         if not model or model.startswith("("):
             self.chat.add_system("No hay modelo disponible en ese motor.")
             return
+        if self._worker is not None:
+            self._queue.append((text, attachments))
+            self.chat.add_user(text or "(adjuntos)")
+            self.chat.add_system(
+                f"En cola ({len(self._queue)}): se procesará en orden "
+                "al terminar la respuesta actual.")
+            return
         msg = text
         if attachments:
             msg += "\n\nAdjuntos (copiados en adjuntos/):\n" + "\n".join(
@@ -315,6 +323,7 @@ class MainWindow(QMainWindow):
     def _stop(self):
         if self._worker:
             self._worker.request_stop()
+        self._queue.clear()          # stop también limpia la cola
         self.chat.add_system("El usuario detuvo la respuesta.")
         if self._last_text and not self.chat.input.toPlainText().strip():
             self.chat.input.setPlainText(self._last_text)
@@ -347,9 +356,18 @@ class MainWindow(QMainWindow):
             self._messages.append({"role": "assistant", "content": text})
             db.log_chat("assistant", text)
         self._worker = None
+        self._desencolar()
 
     def _chat_failed(self, err):
         self.chat.end_stream()
         self.chat.set_busy(False)
         self.chat.add_system("Error: " + err)
         self._worker = None
+        self._desencolar()
+
+    def _desencolar(self):
+        """Procesa el siguiente mensaje de la cola, en orden."""
+        if self._queue:
+            text, attachments = self._queue.pop(0)
+            self.chat.add_system("Procesando mensaje en cola…")
+            self._send(text, attachments)
