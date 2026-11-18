@@ -6,7 +6,8 @@ import sys
 
 APP_DIR = os.path.dirname(os.path.abspath(__file__))
 SKIP_DIRS = {".git", ".venv", "modelos", ".update", ".agente",
-             "__pycache__", "dist", "build", "adjuntos", "voz"}
+             "__pycache__", "dist", "build", "adjuntos", "voz",
+             "repos", "proyectos"}
 SKIP_FILES = {"manifest.json", "gen_manifest.py", "_smoke.py"}
 SKIP_EXT = (".pyc", ".log", ".db")
 

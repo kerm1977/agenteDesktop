@@ -104,6 +104,25 @@ def run_tool(name, args, root):
                              text=True, timeout=120, errors="replace")
         text = (out.stdout + out.stderr).strip()[:4000]
         return "sys_command " + cmd, f"exit {out.returncode}\n{text}"
+    if name == "clone_repo":
+        url = args.get("url", "").strip()
+        repo = (args.get("name") or url.rstrip("/").split("/")[-1]
+                .replace(".git", "")) or "repo"
+        base = os.path.join(os.path.expanduser("~"), "Downloads",
+                            "agente-desktop", "repos")
+        os.makedirs(base, exist_ok=True)
+        dest = os.path.join(base, repo)
+        if os.path.isdir(dest):
+            out = subprocess.run(["git", "-C", dest, "pull", "--ff-only"],
+                                 capture_output=True, text=True,
+                                 timeout=300, errors="replace")
+        else:
+            out = subprocess.run(["git", "clone", "--depth", "1", url, dest],
+                                 capture_output=True, text=True,
+                                 timeout=600, errors="replace")
+        if out.returncode != 0:
+            raise ValueError("git: " + (out.stderr or out.stdout)[-800:])
+        return "clone_repo " + url, "@OPEN:" + dest
     if name == "run_command":
         cmd = args.get("cmd", "")
         low = cmd.lower()
@@ -128,7 +147,10 @@ search_files{text}, project_map{}, open_dir{path} (abre una carpeta como
 raíz del editor/árbol), run_command{cmd} (dentro del proyecto),
 sys_command{cmd,cwd} (cualquier comando del sistema operativo: crear
 carpetas fuera del proyecto, abrir programas, instalar/desinstalar,
-gestionar archivos del equipo; funciona en Windows y Linux).
+gestionar archivos del equipo; funciona en Windows y Linux),
+clone_repo{url} (clona un repo de GitHub dentro del editor: queda como
+raíz del árbol/IDE y pasa a ser el proyecto de trabajo actual; si ya
+existe, hace git pull).
 OJO: el contenido del bloque tool debe ser JSON válido:
 {"name": "sys_command", "args": {"cmd": "mkdir ruta"}} — nunca
 `sys_command{cmd=...}`.
@@ -136,6 +158,9 @@ OJO: el contenido del bloque tool debe ser JSON válido:
 ERES UN AGENTE REAL del sistema operativo: si el usuario pide crear una
 carpeta, abrir algo, instalar/desinstalar un programa o cualquier acción
 en su equipo, usa sys_command — nunca respondas que no puedes hacerlo.
+Si el usuario pega una URL de GitHub o pide agregar/clonar un
+repositorio, usa clone_repo y a partir de ahí trabajas sobre ese
+repositorio como proyecto actual.
 Al crear/abrir un directorio de trabajo nuevo, usa open_dir para que la
 app lo muestre como raíz en el árbol y el editor.
 

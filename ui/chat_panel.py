@@ -306,9 +306,14 @@ class ChatPanel(QWidget):
                 self._voz.finished.connect(self._voz.deleteLater)
                 self._voz.start()
                 self.wave.start()
+                self.input.setPlaceholderText(
+                    "Escuchando… habla y toca 🎤 otra vez para detener")
             else:
                 self.wave.stop()
                 self.btn_mic.setChecked(False)
+                self.input.setPlaceholderText(
+                    "Ordena algo al agente… (Enter envía, "
+                    "Shift+Enter salta línea)")
                 if self._voz:
                     self._voz.stop()  # _voz_termino limpia al finalizar
         except Exception as e:
@@ -319,6 +324,8 @@ class ChatPanel(QWidget):
         self._voz = None
         self.wave.stop()
         self.btn_mic.setChecked(False)
+        self.input.setPlaceholderText(
+            "Ordena algo al agente… (Enter envía, Shift+Enter salta línea)")
 
     def _dictar(self, texto):
         self.input.insertPlainText(texto + " ")
