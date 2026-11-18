@@ -7,6 +7,8 @@ from PySide6.QtWidgets import (QComboBox, QFrame, QGroupBox, QHBoxLayout,
                                QLabel, QMenu, QPlainTextEdit, QPushButton,
                                QScrollArea, QToolButton, QVBoxLayout, QWidget)
 
+from core import consola
+
 
 class Bubble(QLabel):
     def __init__(self, text, kind="assistant"):
@@ -192,28 +194,36 @@ class ChatPanel(QWidget):
 
     # ---------- dictado por voz ----------
     def _toggle_mic(self, on):
-        if on:
-            from core.voz import VoiceWorker
-            engine = self.cmb_voz.currentText().lower()
-            self._voz = VoiceWorker(engine)
-            self._voz.text.connect(self._dictar)
-            self._voz.error.connect(self._voz_error)
-            self._voz.start()
-            self.add_system("🎤 Escuchando… habla y se dicta aquí. "
-                            "Toca 🎤 otra vez para parar.")
-        elif self._voz:
-            self._voz.stop()
-            self._voz = None
+        try:
+            if on:
+                from core.voz import VoiceWorker
+                engine = self.cmb_voz.currentText().lower()
+                self._voz = VoiceWorker(engine)
+                self._voz.text.connect(self._dictar)
+                self._voz.error.connect(self._voz_error)
+                self._voz.finished.connect(self._voz.deleteLater)
+                self._voz.start()
+                self.add_system("🎤 Escuchando… habla y se dicta aquí. "
+                                "Toca 🎤 otra vez para parar.")
+            elif self._voz:
+                voz, self._voz = self._voz, None
+                voz.stop()
+                voz.wait(3000)  # evita destruir el hilo en marcha
+        except Exception as e:
+            consola.log_error("voz", repr(e))
+            self.add_system("🎤 Error: " + str(e))
 
     def _dictar(self, texto):
         self.input.insertPlainText(texto + " ")
 
     def _voz_error(self, err):
         self.add_system("🎤 " + err)
+        consola.log_error("voz", err)
         self.btn_mic.setChecked(False)
         if self._voz:
-            self._voz.stop()
-            self._voz = None
+            voz, self._voz = self._voz, None
+            voz.stop()
+            voz.wait(3000)
 
     def add_user(self, text):
         self._vbox.addWidget(Bubble("Tú: " + text, "user"))

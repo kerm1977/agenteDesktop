@@ -1,8 +1,8 @@
 {
- "version": "0.1.7",
+ "version": "0.1.8",
  "files": {
   ".gitignore": "4f6ad4d1f3d6d41a7a4fe4f8b336f9581156e6506c262154abde816faeab6005",
-  "app.py": "ce9c35fef59f98bbe584394a0f87324780cab6f70110e99c76110743aca79d9c",
+  "app.py": "36e93ec89fd1c84da45fa9460bbd16816bde19a37da50598284832fb5292c0df",
   "README.md": "1198d6d05147c513041a8fc654e7312047ed9892328f9987dad377046e8c6dde",
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "b968b0d6616b45c608a9619fef833db0765cdb895abf0ea8a3602071e4555297",
@@ -23,7 +23,7 @@
   "core/voz.py": "d6aad1d214dfd1a94219827d56ff19570e1ff67ceb2a2dd35d8a031a745070a2",
   "core/__init__.py": "43e1ecfd357e54391a7755088e876aced42c99bafcd2e2157ae9c8525dc1e5f7",
   "ui/barras.py": "af6b0a4408d8c9453225a431bcc785a7396f5d25fe70fde7f27f6eff0a5f6483",
-  "ui/chat_panel.py": "7be77fa6227ee89fb1184a3457ab633659fed87db57bcab3c91b0eacf839d608",
+  "ui/chat_panel.py": "3ddb026a6d2b6603fa4109ddabb8b34568f0789ed02c1554baef2f8af3964ab2",
   "ui/console_panel.py": "941bcd9e0d5990cfa0e8004ba5a92e3962adc2b66c522252bba15a02a555a060",
   "ui/editor_panel.py": "6c6e1ee40e8a315b14623905a7278ff401c68f0e5c863b646089af13577e30ec",
   "ui/main_window.py": "27473e2279a881aec72507a376adb66fdf389573339e87b882d5ad2a24c05ae6",
