@@ -1,6 +1,8 @@
 """Motores de modelos: Ollama, LM Studio, llama.cpp y API compatible OpenAI."""
+import http.client
 import json
 import os
+import urllib.parse
 import urllib.request
 
 OLLAMA_URL = os.environ.get("OLLAMA_URL", "http://127.0.0.1:11434")
@@ -23,19 +25,44 @@ def _http_json(url, payload=None, timeout=8):
         return json.loads(r.read().decode())
 
 
+_active_conn = None
 _active_resp = None
 
 
 def abort_stream():
-    """Cierra la respuesta HTTP activa para desbloquear chat_stream."""
-    global _active_resp
-    r = _active_resp
-    _active_resp = None
-    if r is not None:
-        try:
-            r.close()
-        except Exception:
-            pass
+    """Cierra conexión/respuesta activa para desbloquear chat_stream."""
+    global _active_conn, _active_resp
+    for obj in (_active_resp, _active_conn):
+        if obj is not None:
+            try:
+                obj.close()
+            except Exception:
+                pass
+    _active_resp = _active_conn = None
+
+
+def _open_stream(cfg, path, payload):
+    """Abre POST streaming y registra la conexión para abort_stream()."""
+    global _active_conn, _active_resp
+    u = urllib.parse.urlparse(cfg["url"])
+    https = u.scheme == "https"
+    cls = http.client.HTTPSConnection if https else http.client.HTTPConnection
+    conn = cls(u.hostname, u.port or (443 if https else 80), timeout=600)
+    _active_conn = conn
+    headers = {"Content-Type": "application/json"}
+    key = os.environ.get("OPENAI_API_KEY")
+    if key and cfg["tipo"] != "ollama":
+        headers["Authorization"] = f"Bearer {key}"
+    conn.request("POST", path, body=json.dumps(payload).encode(),
+                 headers=headers)
+    resp = conn.getresponse()
+    _active_resp = resp
+    return conn, resp
+
+
+def _end_stream():
+    global _active_conn, _active_resp
+    _active_resp = _active_conn = None
 
 
 def backend_status(backend="ollama"):
@@ -70,20 +97,22 @@ def chat_stream(backend, model, messages, options=None):
     cfg = BACKENDS.get(backend, BACKENDS["ollama"])
     options = options or {}
     if cfg["tipo"] == "ollama":
-        payload = {"model": model, "messages": messages, "stream": True, "options": options}
-        req = urllib.request.Request(cfg["url"] + "/api/chat",
-                                     data=json.dumps(payload).encode(),
-                                     headers={"Content-Type": "application/json"})
-        with urllib.request.urlopen(req, timeout=600) as r:
-            global _active_resp
-            _active_resp = r
-            try:
-                for raw in r:
-                    raw = raw.strip()
-                    if raw:
-                        yield json.loads(raw.decode())
-            finally:
-                _active_resp = None
+        payload = {"model": model, "messages": messages,
+                   "stream": True, "options": options}
+        conn = None
+        try:
+            conn, resp = _open_stream(cfg, "/api/chat", payload)
+            for raw in resp:
+                raw = raw.strip()
+                if raw:
+                    yield json.loads(raw.decode())
+        finally:
+            if conn is not None:
+                try:
+                    conn.close()
+                except Exception:
+                    pass
+            _end_stream()
         return
 
     opts = dict(options)
@@ -94,32 +123,31 @@ def chat_stream(backend, model, messages, options=None):
     opts.pop("num_ctx", None)
     payload = {"model": model, "messages": messages, "stream": True}
     payload.update(opts)
-    url = cfg["url"].rstrip("/") + "/chat/completions"
-    req = urllib.request.Request(url, data=json.dumps(payload).encode(),
-                                 headers={"Content-Type": "application/json"})
-    key = os.environ.get("OPENAI_API_KEY")
-    if key:
-        req.add_header("Authorization", f"Bearer {key}")
-    with urllib.request.urlopen(req, timeout=600) as r:
-        _active_resp = r
-        try:
-            for raw in r:
-                raw = raw.strip()
-                if not raw or raw == b"data: [DONE]":
-                    continue
-                if raw.startswith(b"data:"):
-                    raw = raw[5:].strip()
-                try:
-                    obj = json.loads(raw.decode())
-                except Exception:
-                    continue
-                for ch in obj.get("choices", []):
-                    delta = ch.get("delta", {})
-                    content = delta.get("content")
-                    if content:
-                        yield {"model": model, "created_at": "",
-                               "message": {"role": "assistant",
-                                           "content": content},
-                               "done": ch.get("finish_reason") is not None}
-        finally:
-            _active_resp = None
+    conn = None
+    try:
+        conn, resp = _open_stream(cfg, "/chat/completions", payload)
+        for raw in resp:
+            raw = raw.strip()
+            if not raw or raw == b"data: [DONE]":
+                continue
+            if raw.startswith(b"data:"):
+                raw = raw[5:].strip()
+            try:
+                obj = json.loads(raw.decode())
+            except Exception:
+                continue
+            for ch in obj.get("choices", []):
+                delta = ch.get("delta", {})
+                content = delta.get("content")
+                if content:
+                    yield {"model": model, "created_at": "",
+                           "message": {"role": "assistant",
+                                       "content": content},
+                           "done": ch.get("finish_reason") is not None}
+    finally:
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
+        _end_stream()

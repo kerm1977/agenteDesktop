@@ -1,5 +1,5 @@
 {
- "version": "0.2.6",
+ "version": "0.2.7",
  "files": {
   ".gitignore": "4f6ad4d1f3d6d41a7a4fe4f8b336f9581156e6506c262154abde816faeab6005",
   "app.py": "36e93ec89fd1c84da45fa9460bbd16816bde19a37da50598284832fb5292c0df",
@@ -7,9 +7,9 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "b968b0d6616b45c608a9619fef833db0765cdb895abf0ea8a3602071e4555297",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "5b92b92f35dad3210aadd7dd1dfac28aa571e94330d6fca0aedde799e7ba4eea",
+  "version.json": "28092a27cc7564c0145d4d142b1c6d9d3450521875125a8bce770da162eae139",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
-  "core/backends.py": "3b11bbb3d9aa2065e203e13b84de3dba43cb7fae06b801049fa00b68cf3651af",
+  "core/backends.py": "268e2af6074bf21488f8536d391a1ce523530edf8bfef055d3007ac069433785",
   "core/catalogo.py": "7f02262b18876bdada4260bdbbc1ce2bd00f6a644e679eac2ae088a8db8e9c0b",
   "core/consola.py": "acf76d422f647fb445063a46f9214827c089442d4e1ea6a9d16c20245c188927",
   "core/db.py": "94e6d4499089a8b362a594d27463fca3429b3fdca0742d35a46efe8d29d5c460",
