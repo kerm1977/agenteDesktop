@@ -104,6 +104,23 @@ def run_tool(name, args, root):
                              text=True, timeout=120, errors="replace")
         text = (out.stdout + out.stderr).strip()[:4000]
         return "sys_command " + cmd, f"exit {out.returncode}\n{text}"
+    if name == "delete_path":
+        p = args["path"]
+        full = p if (os.path.isabs(p)
+                     and db.get_cfg("perm_admin") == "1") else _safe(root, p)
+        import shutil
+        if os.path.isdir(full):
+            shutil.rmtree(full)
+        elif os.path.isfile(full):
+            os.remove(full)
+        else:
+            raise ValueError("no existe: " + p)
+        memoria.invalidate(root)
+        return "delete_path " + p, "eliminado: " + full
+    if name == "read_doc":
+        p = args["path"]
+        full = p if os.path.isabs(p) else _safe(root, p)
+        return "read_doc " + p, _read_doc(full)
     if name == "clone_repo":
         url = args.get("url", "").strip()
         repo = (args.get("name") or url.rstrip("/").split("/")[-1]
@@ -135,6 +152,46 @@ def run_tool(name, args, root):
     raise ValueError(f"herramienta desconocida: {name}")
 
 
+def _read_doc(path):
+    """Extrae texto de txt/md/csv/pdf/docx/xlsx/pptx (máx ~8000 chars)."""
+    ext = path.rsplit(".", 1)[-1].lower() if "." in path else ""
+    cap = 8000
+    if ext in ("txt", "md", "csv", "json", "xml", "log", "py", "js",
+               "html", "css", "bat", "sh", "ini", "cfg", "yml", "yaml"):
+        with open(path, "r", encoding="utf-8", errors="replace") as f:
+            return f.read(cap)
+    if ext == "pdf":
+        import pypdf
+        r = pypdf.PdfReader(path)
+        return "\n".join(
+            (p.extract_text() or "") for p in r.pages)[:cap]
+    if ext == "docx":
+        import docx
+        d = docx.Document(path)
+        return "\n".join(p.text for p in d.paragraphs)[:cap]
+    if ext in ("xlsx", "xlsm"):
+        import openpyxl
+        wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
+        out = []
+        for ws in wb.worksheets:
+            out.append(f"## {ws.title}")
+            for row in ws.iter_rows(values_only=True):
+                out.append(" | ".join("" if c is None else str(c)
+                                      for c in row))
+        return "\n".join(out)[:cap]
+    if ext in ("pptx", "pptm"):
+        import pptx
+        pr = pptx.Presentation(path)
+        out = []
+        for i, slide in enumerate(pr.slides, 1):
+            for shape in slide.shapes:
+                if shape.has_text_frame:
+                    out.append(shape.text_frame.text)
+        return "\n".join(out)[:cap]
+    raise ValueError("formato no soportado: ." + ext +
+                     " (txt, pdf, docx, xlsx, pptx)")
+
+
 TOOLS_DOC = """Tienes herramientas para actuar sobre el proyecto. Úsalas en bloques:
 
 ```tool
@@ -150,7 +207,10 @@ carpetas fuera del proyecto, abrir programas, instalar/desinstalar,
 gestionar archivos del equipo; funciona en Windows y Linux),
 clone_repo{url} (clona un repo de GitHub dentro del editor: queda como
 raíz del árbol/IDE y pasa a ser el proyecto de trabajo actual; si ya
-existe, hace git pull).
+existe, hace git pull),
+delete_path{path} (elimina archivos o carpetas, también rutas absolutas),
+read_doc{path} (lee y extrae el texto de TXT/MD/CSV/PDF/DOCX/XLSX/PPTX
+para analizarlo o resumirlo).
 OJO: el contenido del bloque tool debe ser JSON válido:
 {"name": "sys_command", "args": {"cmd": "mkdir ruta"}} — nunca
 `sys_command{cmd=...}`.
@@ -161,6 +221,11 @@ en su equipo, usa sys_command — nunca respondas que no puedes hacerlo.
 Si el usuario pega una URL de GitHub o pide agregar/clonar un
 repositorio, usa clone_repo y a partir de ahí trabajas sobre ese
 repositorio como proyecto actual.
+Puedes hacer TODO en el equipo: crear/eliminar carpetas y archivos,
+escanear, leer documentos (PDF, Word, Excel, PowerPoint, TXT con
+read_doc), analizarlos y resumirlos, programar y ejecutar comandos.
+Si el usuario pide "traducir/traduce/tradúceme", traduce el texto al
+idioma que pida (español por defecto) — responde SOLO la traducción.
 Al crear/abrir un directorio de trabajo nuevo, usa open_dir para que la
 app lo muestre como raíz en el árbol y el editor.
 
