@@ -27,6 +27,8 @@ CATALOGO = [
      "peso": "ligero", "gb": 2.0, "ram_gb": 6, "ctx": 128000},
     {"tag": "stable-code:3b", "nombre": "Stable Code 3B",
      "peso": "ligero", "gb": 1.6, "ram_gb": 5, "ctx": 16384},
+    {"tag": "opencoder:1.5b", "nombre": "OpenCoder 1.5B",
+     "peso": "ligero", "gb": 1.0, "ram_gb": 4, "ctx": 4096},
 
     # ---------- medios (caben, pero lentos sin GPU) ----------
     {"tag": "codellama:7b-instruct", "nombre": "CodeLlama 7B Instruct",
@@ -47,6 +49,16 @@ CATALOGO = [
      "peso": "medio", "gb": 4.9, "ram_gb": 12, "ctx": 128000},
     {"tag": "yi-coder:9b", "nombre": "Yi-Coder 9B",
      "peso": "medio", "gb": 5.3, "ram_gb": 14, "ctx": 131072},
+    {"tag": "opencoder:8b", "nombre": "OpenCoder 8B",
+     "peso": "medio", "gb": 4.9, "ram_gb": 12, "ctx": 4096},
+    {"tag": "codegeex4:9b", "nombre": "CodeGeeX4 9B",
+     "peso": "medio", "gb": 5.5, "ram_gb": 14, "ctx": 131072},
+    {"tag": "deepseek-coder-v2:16b-lite-instruct",
+     "nombre": "DeepSeek Coder V2 Lite 16B (MoE)",
+     "peso": "medio", "gb": 10.7, "ram_gb": 14, "ctx": 16384},
+    {"tag": "qwen2.5-coder:14b-instruct-q4_K_M",
+     "nombre": "Qwen2.5 Coder 14B q4 (lento)",
+     "peso": "medio", "gb": 9.0, "ram_gb": 14, "ctx": 32768},
 ]
 
 PESOS = {
