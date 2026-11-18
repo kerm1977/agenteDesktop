@@ -1,8 +1,11 @@
-"""Panel de chat: mensajes, tarjetas de tarea contraíbles, entrada."""
+"""Panel de chat: mensajes, tarjetas contraíbles y composer estilo Devin."""
+import os
+
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import (QGroupBox, QHBoxLayout, QLabel, QPlainTextEdit,
-                               QPushButton, QScrollArea, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QComboBox, QFrame, QGroupBox, QHBoxLayout,
+                               QLabel, QMenu, QPlainTextEdit, QPushButton,
+                               QScrollArea, QToolButton, QVBoxLayout, QWidget)
 
 
 class Bubble(QLabel):
@@ -10,18 +13,17 @@ class Bubble(QLabel):
         super().__init__(text)
         self.setWordWrap(True)
         self.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        self.setTextFormat(Qt.PlainText)
-        color = {"user": "#0b5cad", "assistant": "#2d2d30",
-                 "system": "#5a3a00"}.get(kind, "#2d2d30")
+        color = {"user": "#1f4b7a", "assistant": "#232327",
+                 "system": "#3d3416"}.get(kind, "#232327")
         self.setStyleSheet(f"QLabel{{background:{color};color:#e8e8e8;"
-                           "border-radius:8px;padding:8px;}}")
+                           "border-radius:10px;padding:10px 12px;}}")
 
 
 class TaskCard(QGroupBox):
     """Tarjeta contraíble para cada acción del agente."""
 
     def __init__(self, title, detail=""):
-        super().__init__(title)
+        super().__init__("▸ " + title)
         self.setCheckable(True)
         self.setChecked(False)
         lay = QVBoxLayout(self)
@@ -31,64 +33,126 @@ class TaskCard(QGroupBox):
         f = QFont("Consolas", 9)
         f.setStyleHint(QFont.Monospace)
         self._lbl.setFont(f)
+        self._lbl.setStyleSheet("color:#b5b5b5;")
         self._lbl.setVisible(False)
         lay.addWidget(self._lbl)
         self.setStyleSheet(
-            "QGroupBox{background:#252526;color:#9cdcfe;border:1px solid #3e3e42;"
-            "border-radius:6px;margin-top:10px;padding-top:14px;}"
-            "QGroupBox::title{subcontrol-origin:margin;left:8px;}"
-            "QGroupBox::indicator{right:6px;}")
-        self.toggled.connect(self._lbl.setVisible)
+            "QGroupBox{background:#1f1f22;color:#9cdcfe;"
+            "border:1px solid #333338;border-radius:8px;"
+            "margin-top:12px;padding-top:16px;}"
+            "QGroupBox::title{subcontrol-origin:margin;left:10px;}")
+        self._title = title
+        self.toggled.connect(self._toggle)
 
-    def append(self, text):
-        self._lbl.setText(self._lbl.text() + "\n" + text)
+    def _toggle(self, on):
+        self.setTitle(("▾ " if on else "▸ ") + self._title)
+        self._lbl.setVisible(on)
 
 
 class ChatPanel(QWidget):
-    send_requested = Signal(str)
+    send_requested = Signal(str, list)
     stop_requested = Signal()
+    attach_requested = Signal(str)  # "files" | "folder"
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self._attachments = []
+        self._stream_lbl = None
         lay = QVBoxLayout(self)
-        lay.setContentsMargins(4, 4, 4, 4)
+        lay.setContentsMargins(0, 0, 0, 0)
+
         self._scroll = QScrollArea()
         self._scroll.setWidgetResizable(True)
-        self._scroll.setStyleSheet("QScrollArea{border:none;background:#1b1b1c;}")
+        self._scroll.setStyleSheet("QScrollArea{border:none;background:#131314;}")
         self._box = QWidget()
         self._vbox = QVBoxLayout(self._box)
         self._vbox.setAlignment(Qt.AlignTop)
-        self._vbox.setSpacing(6)
+        self._vbox.setSpacing(8)
+        self._vbox.setContentsMargins(10, 10, 10, 10)
         self._scroll.setWidget(self._box)
         lay.addWidget(self._scroll, 1)
-
-        self.input = QPlainTextEdit()
-        self.input.setPlaceholderText(
-            "Escribe tu orden… (Ctrl+Enter para enviar)")
-        self.input.setMaximumHeight(80)
-        self.input.setStyleSheet(
-            "QPlainTextEdit{background:#252526;color:#e8e8e8;"
-            "border:1px solid #3e3e42;border-radius:6px;padding:6px;}")
-        self.input.installEventFilter(self)
-        lay.addWidget(self.input)
-
-        row = QHBoxLayout()
-        self.btn_send = QPushButton("Enviar")
-        self.btn_stop = QPushButton("Detener")
-        self.btn_stop.setEnabled(False)
-        for b in (self.btn_send, self.btn_stop):
-            b.setStyleSheet("QPushButton{background:#0e639c;color:white;"
-                            "border:none;border-radius:4px;padding:6px 14px;}"
-                            "QPushButton:disabled{background:#3e3e42;}")
-        row.addStretch(1)
-        row.addWidget(self.btn_stop)
-        row.addWidget(self.btn_send)
-        lay.addLayout(row)
+        lay.addWidget(self._build_composer())
 
         self.btn_send.clicked.connect(self._emit_send)
         self.btn_stop.clicked.connect(self.stop_requested)
-        self._stream_lbl = None
+        self.input.installEventFilter(self)
 
+    # ---------- composer ----------
+    def _build_composer(self):
+        frame = QFrame()
+        frame.setStyleSheet(
+            "QFrame{background:#1e1e20;border:1px solid #333338;"
+            "border-radius:12px;margin:8px;}")
+        lay = QVBoxLayout(frame)
+        lay.setContentsMargins(10, 8, 10, 8)
+        lay.setSpacing(6)
+
+        self._chips = QLabel("")
+        self._chips.setStyleSheet("color:#7ab3e0;font-size:11px;")
+        self._chips.setVisible(False)
+        lay.addWidget(self._chips)
+
+        self.input = QPlainTextEdit()
+        self.input.setPlaceholderText(
+            "Ordena algo al agente… (Ctrl+Enter envía)")
+        self.input.setMaximumHeight(90)
+        self.input.setStyleSheet(
+            "QPlainTextEdit{background:transparent;color:#e8e8e8;"
+            "border:none;font-size:13px;}")
+        lay.addWidget(self.input)
+
+        row = QHBoxLayout()
+        self.btn_attach = QToolButton()
+        self.btn_attach.setText("＋")
+        self.btn_attach.setPopupMode(QToolButton.InstantPopup)
+        self.btn_attach.setStyleSheet(
+            "QToolButton{background:#2a2a2e;color:#ddd;border:1px solid #3a3a40;"
+            "border-radius:12px;padding:4px 10px;font-size:14px;}")
+        menu = QMenu(self.btn_attach)
+        menu.setStyleSheet("QMenu{background:#252528;color:#ddd;"
+                           "border:1px solid #3a3a40;}")
+        menu.addAction("📄 Adjuntar archivos",
+                       lambda: self.attach_requested.emit("files"))
+        menu.addAction("📁 Adjuntar carpeta",
+                       lambda: self.attach_requested.emit("folder"))
+        self.btn_attach.setMenu(menu)
+        row.addWidget(self.btn_attach)
+
+        self.cmb_backend = QComboBox()
+        self.cmb_model = QComboBox()
+        self.cmb_model.setMinimumWidth(160)
+        for c in (self.cmb_backend, self.cmb_model):
+            c.setStyleSheet("QComboBox{background:#2a2a2e;color:#ddd;"
+                            "border:1px solid #3a3a40;border-radius:6px;"
+                            "padding:3px 8px;}")
+        row.addWidget(self.cmb_backend)
+        row.addWidget(self.cmb_model)
+        row.addStretch(1)
+
+        self.btn_stop = QPushButton("■")
+        self.btn_stop.setEnabled(False)
+        self.btn_stop.setStyleSheet(
+            "QPushButton{background:#5a2d2d;color:#eee;border:none;"
+            "border-radius:12px;padding:5px 12px;}"
+            "QPushButton:disabled{background:#2a2a2e;color:#666;}")
+        self.btn_send = QPushButton("➤")
+        self.btn_send.setStyleSheet(
+            "QPushButton{background:#0e639c;color:white;border:none;"
+            "border-radius:12px;padding:5px 14px;font-size:14px;}"
+            "QPushButton:disabled{background:#2a2a2e;color:#666;}")
+        row.addWidget(self.btn_stop)
+        row.addWidget(self.btn_send)
+        lay.addLayout(row)
+        return frame
+
+    # ---------- adjuntos ----------
+    def add_attachment(self, path):
+        self._attachments.append(path)
+        names = [os.path.basename(p) for p in self._attachments]
+        self._chips.setText("📎 " + "  ·  ".join(names))
+        self._chips.setVisible(True)
+
+    # ---------- mensajes ----------
     def eventFilter(self, obj, event):
         from PySide6.QtCore import QEvent
         if obj is self.input and event.type() == QEvent.KeyPress:
@@ -100,9 +164,11 @@ class ChatPanel(QWidget):
 
     def _emit_send(self):
         text = self.input.toPlainText().strip()
-        if text:
+        if text or self._attachments:
             self.input.clear()
-            self.send_requested.emit(text)
+            atts, self._attachments = self._attachments, []
+            self._chips.setVisible(False)
+            self.send_requested.emit(text, atts)
 
     def add_user(self, text):
         self._vbox.addWidget(Bubble("Tú: " + text, "user"))
