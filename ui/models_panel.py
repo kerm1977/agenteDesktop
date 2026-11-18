@@ -193,26 +193,7 @@ class ModelsPanel(QWidget):
         lay.addWidget(self._scroll, 1)
 
         self._render_catalogo()
-
-        cfg = QFrame()
-        cfg.setStyleSheet("QFrame{border-top:1px solid #2c2c30;}")
-        cl = QHBoxLayout(cfg)
-        cl.addWidget(QLabel("Peso:"))
-        self._peso = QComboBox()
-        self._peso.addItems(["ligero", "medio", "fuerte"])
-        self._peso.currentTextChanged.connect(self._peso_changed)
-        cl.addWidget(self._peso)
-        cl.addWidget(QLabel("Ctx:"))
-        self._ctx = QSpinBox()
-        self._ctx.setRange(512, 131072)
-        self._ctx.setSingleStep(1024)
-        cl.addWidget(self._ctx)
-        cl.addWidget(QLabel("Max:"))
-        self._pred = QSpinBox()
-        self._pred.setRange(-1, 32768)
-        self._pred.setSingleStep(512)
-        cl.addWidget(self._pred)
-        lay.addWidget(cfg)
+        self._sel = None
 
         row2 = QHBoxLayout()
         btn_dir = QPushButton("Carpeta")
@@ -227,7 +208,12 @@ class ModelsPanel(QWidget):
         btn_bench.setStyleSheet("background:#303038;")
         btn_bench.setToolTip("Mide qué tan rápido responde cada modelo")
         btn_bench.clicked.connect(self.analyze)
+        btn_aj = QPushButton("Rendimiento")
+        btn_aj.setStyleSheet("background:#303038;")
+        btn_aj.setToolTip("Velocidad, contexto, tokens e hilos del modelo")
+        btn_aj.clicked.connect(self._ajustes)
         row2.addWidget(btn_dir, 1)
+        row2.addWidget(btn_aj)
         row2.addWidget(btn_bench)
         row2.addWidget(btn_ref)
         lay.addLayout(row2)
@@ -303,19 +289,18 @@ class ModelsPanel(QWidget):
 
     # ---------- prefs por modelo ----------
     def _select_model(self, model):
-        p = db.get_model_prefs(model)
-        self._peso.setCurrentText(p["peso"])
-        self._ctx.setValue(p["num_ctx"])
-        self._pred.setValue(p["num_predict"])
+        self._sel = model
 
-    def _peso_changed(self, peso):
-        pr = catalogo.PESOS[peso]
-        self._ctx.setValue(pr["num_ctx"])
-        self._pred.setValue(pr["num_predict"])
+    def _ajustes(self):
+        model = self._sel or (backends.list_models("ollama") or [None])[0]
+        if not model:
+            self._status.setText("Sin modelo para ajustar.")
+            return
+        from ui.ajustes_dialog import AjustesDialog
+        AjustesDialog(model, self).exec()
 
     def save_prefs(self, model):
-        db.set_model_prefs(model, self._peso.currentText(),
-                           self._ctx.value(), self._pred.value())
+        self._sel = model
 
     # ---------- hardware ----------
     def scan_hardware(self):

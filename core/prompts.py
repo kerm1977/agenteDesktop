@@ -20,7 +20,7 @@ def build_system(editor_ctx, root, self_mode=False):
         system += SYSTEM_SELF
     if editor_ctx and not self_mode:
         content = editor_ctx["content"]
-        cap = 6000
+        cap = 2500
         system += (f"\n\nEl usuario tiene abierto '{editor_ctx['path']}' en "
                    f"el editor. Contenido actual (puede estar sin guardar):\n"
                    f"```\n{content[:cap]}\n```")
@@ -34,8 +34,12 @@ def build_system(editor_ctx, root, self_mode=False):
                 "OBLIGATORIO: antes de responder sobre cualquier parte del "
                 "proyecto, revisa absolutamente todo lo compartido; usa "
                 "read_file sobre los archivos relevantes para ver su "
-                "contenido completo, sin asumir ni responder de memoria.\n"
-                + memoria.digest(root, cap=3500))
+                "contenido completo, sin asumir ni responder de memoria. "
+                "Si el usuario da una orden genérica (p. ej. 'revisa mi "
+                "proyecto', 'desglosa', 'arréglalo') sin decir sobre qué "
+                "trabajar, pregunta primero si desea trabajar con este "
+                "proyecto cargado, nombrando su carpeta raíz.\n"
+                + memoria.digest(root, cap=2000))
         except Exception as e:
             consola.log_error("memoria", repr(e))
     return system

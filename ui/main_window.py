@@ -11,6 +11,7 @@ from ui import barras, ota_ui
 from ui.chat_panel import ChatPanel
 from ui.console_panel import ConsolePanel
 from ui.editor_panel import EditorPanel
+from ui.ajustes_dialog import AjustesDialog
 from ui.equipo_dialog import EquipoDialog
 from ui.models_panel import ModelsPanel
 from ui.nuevo_proyecto import NuevoProyectoDialog, crear_proyecto
@@ -109,6 +110,12 @@ class MainWindow(QMainWindow):
 
     def _scan_hw(self):
         self._equipo_info()
+
+    def _ajustes(self):
+        model = self.chat.cmb_model.currentText()
+        if model and not model.startswith("("):
+            AjustesDialog(model, self).exec()
+            consola.log_info("ui", "rendimiento ajustado para " + model)
 
     def _fill_backends(self):
         for key, cfg in backends.BACKENDS.items():
@@ -248,13 +255,16 @@ class MainWindow(QMainWindow):
         self.models.save_prefs(model)
         system = prompts.build_system(self.editor.context(), self._root,
                                       self._self_mode)
+        historial = [m for m in self._messages
+                     if m["role"] != "system"][-8:]
         self._messages = ([{"role": "system", "content": system}]
-                          + [m for m in self._messages
-                             if m["role"] != "system"])
+                          + historial)
         self._messages.append({"role": "user", "content": msg})
         db.log_chat("user", msg)
         options = {k: v for k, v in db.get_model_prefs(model).items()
                    if k in ("num_ctx", "num_predict", "temperature")}
+        options["num_thread"] = int(db.get_cfg(
+            "num_thread", os.cpu_count() or 4))
         self.chat.start_stream()
         self.chat.set_busy(True)
         self._worker = ChatWorker(backend, model, self._messages, self._root,
