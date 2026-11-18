@@ -74,7 +74,7 @@ def build_toolbar(win):
         lambda: win._dock.setVisible(not win._dock.isVisible()))
     tb.addAction(act_console)
 
-    act_self = QAction(iconos.icon("gear", 16), "Mejorar agente", win)
+    act_self = QAction(iconos.icon("bot", 16), "Mejorar agente", win)
     act_self.setCheckable(True)
     act_self.toggled.connect(win._toggle_self_mode)
     tb.addAction(act_self)

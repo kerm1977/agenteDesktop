@@ -1,127 +1,65 @@
-"""Iconos planos dibujados con QPainter (sin emoji, sin assets)."""
-from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import (QColor, QIcon, QPainter, QPainterPath, QPen,
-                           QPixmap, QPolygonF)
+"""Iconos planos Lucide (MIT) renderizados desde SVG con QSvgRenderer."""
+from PySide6.QtCore import QByteArray, Qt
+from PySide6.QtGui import QIcon, QPainter, QPixmap
+from PySide6.QtSvg import QSvgRenderer
+
+# Trazos Lucide (rejilla 24x24, stroke 2, caps/joins redondos)
+ICONS = {
+    "folder": '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 '
+              '1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 '
+              '0 0 0 2 2Z"/>',
+    "newfolder": '<path d="M12 10v6"/><path d="M9 13h6"/>'
+                 '<path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 '
+                 '0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13'
+                 'a2 2 0 0 0 2 2Z"/>',
+    "file": '<path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 '
+            '2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/>',
+    "db": '<ellipse cx="12" cy="5" rx="9" ry="3"/>'
+          '<path d="M3 5v14a9 3 0 0 0 18 0V5"/>'
+          '<path d="M3 12a9 3 0 0 0 18 0"/>',
+    "monitor": '<rect width="20" height="14" x="2" y="3" rx="2"/>'
+               '<line x1="8" x2="16" y1="21" y2="21"/>'
+               '<line x1="12" x2="12" y1="17" y2="21"/>',
+    "save": '<path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19'
+            'a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/>'
+            '<path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/>'
+            '<path d="M7 3v4a1 1 0 0 0 1 1h7"/>',
+    "terminal": '<path d="m4 17 6-6-6-6"/><path d="M12 19h8"/>',
+    "bot": '<path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" '
+           'rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/>'
+           '<path d="M15 13v2"/><path d="M9 13v2"/>',
+    "refresh": '<path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 '
+               '8"/><path d="M21 3v5h-5"/>'
+               '<path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 '
+               '16"/><path d="M8 16H3v5"/>',
+    "plus": '<path d="M5 12h14"/><path d="M12 5v14"/>',
+    "mic": '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"'
+           '/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/>'
+           '<line x1="12" x2="12" y1="19" y2="22"/>',
+    "send": '<path d="M14.5 21.7a.5.5 0 0 0 .94 0l6.5-19a.5.5 0 0 0-.64'
+            '-.64l-19 6.5a.5.5 0 0 0 0 .94l7.93 3.18a2 2 0 0 1 1.11 1.11z"'
+            '/><path d="m21.85 2.15-10.94 10.94"/>',
+    "stop": '<rect width="16" height="16" x="4" y="4" rx="2"/>',
+    "download": '<path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 '
+                '2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/>',
+    "check": '<path d="M20 6 9 17l-5-5"/>',
+    "x": '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+    "search": '<circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>',
+}
+
+_SVG = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" '
+        'fill="none" stroke="{c}" stroke-width="2" stroke-linecap="round" '
+        'stroke-linejoin="round">{paths}</svg>')
 
 
 def icon(name, size=20, color="#d0d0d6"):
-    """Devuelve QIcon plano de `name` a `size` px, centrado."""
+    """QIcon plano de `name` (Lucide) a `size` px, centrado."""
+    svg = _SVG.format(c=color, paths=ICONS.get(name, ICONS["file"]))
+    renderer = QSvgRenderer(QByteArray(svg.encode()))
     pm = QPixmap(size, size)
     pm.fill(Qt.transparent)
     p = QPainter(pm)
     p.setRenderHint(QPainter.Antialiasing)
-    c = QColor(color)
-    pen = QPen(c)
-    pen.setWidthF(max(1.4, size / 13))
-    pen.setCapStyle(Qt.RoundCap)
-    pen.setJoinStyle(Qt.RoundJoin)
-    p.setPen(pen)
-    p.setBrush(Qt.NoBrush)
-    u = size / 20.0  # rejilla 20x20
-
-    def L(x1, y1, x2, y2):
-        p.drawLine(QPointF(x1 * u, y1 * u), QPointF(x2 * u, y2 * u))
-
-    def R(x, y, w, h, r=1.6):
-        p.drawRoundedRect(QRectF(x * u, y * u, w * u, h * u), r * u, r * u)
-
-    if name == "folder":
-        path = QPainterPath(QPointF(3 * u, 16 * u))
-        path.lineTo(3 * u, 6 * u)
-        path.lineTo(8 * u, 6 * u)
-        path.lineTo(10 * u, 8 * u)
-        path.lineTo(17 * u, 8 * u)
-        path.lineTo(17 * u, 16 * u)
-        path.closeSubpath()
-        p.drawPath(path)
-    elif name == "newfolder":
-        path = QPainterPath(QPointF(2 * u, 16 * u))
-        path.lineTo(2 * u, 6 * u)
-        path.lineTo(7 * u, 6 * u)
-        path.lineTo(9 * u, 8 * u)
-        path.lineTo(16 * u, 8 * u)
-        path.lineTo(16 * u, 16 * u)
-        path.closeSubpath()
-        p.drawPath(path)
-        L(14.5, 2, 18.5, 2)
-        L(16.5, 0.2, 16.5, 4)
-    elif name == "file":
-        path = QPainterPath(QPointF(5.5 * u, 17 * u))
-        path.lineTo(5.5 * u, 3 * u)
-        path.lineTo(11.5 * u, 3 * u)
-        path.lineTo(14.5 * u, 6 * u)
-        path.lineTo(14.5 * u, 17 * u)
-        path.closeSubpath()
-        p.drawPath(path)
-        L(11.5, 3, 11.5, 6)
-        L(11.5, 6, 14.5, 6)
-    elif name == "db":
-        p.drawEllipse(QRectF(4 * u, 3 * u, 12 * u, 5 * u))
-        L(4, 5.5, 4, 15)
-        L(16, 5.5, 16, 15)
-        p.drawArc(QRectF(4 * u, 12 * u, 12 * u, 5.5 * u), 180 * 16, 180 * 16)
-        p.drawArc(QRectF(4 * u, 9 * u, 12 * u, 5 * u), 180 * 16, 180 * 16)
-    elif name == "monitor":
-        R(2.5, 4, 15, 10)
-        L(10, 14, 10, 16.5)
-        L(6, 17, 14, 17)
-    elif name == "save":
-        R(4, 3.5, 12, 13)
-        R(7, 3.5, 6, 5, 0.8)
-        L(7, 12.5, 13, 12.5)
-    elif name == "terminal":
-        R(2.5, 4, 15, 12)
-        L(5.5, 7.5, 8, 10)
-        L(8, 10, 5.5, 12.5)
-        L(10.5, 12.5, 14.5, 12.5)
-    elif name == "gear":
-        p.drawEllipse(QPointF(10 * u, 10 * u), 3.4 * u, 3.4 * u)
-        for a in range(0, 360, 45):
-            import math
-            r1, r2 = 5.2, 8
-            x1 = 10 + r1 * math.cos(math.radians(a))
-            y1 = 10 + r1 * math.sin(math.radians(a))
-            x2 = 10 + r2 * math.cos(math.radians(a))
-            y2 = 10 + r2 * math.sin(math.radians(a))
-            L(x1, y1, x2, y2)
-    elif name == "refresh":
-        p.drawArc(QRectF(4 * u, 4 * u, 12 * u, 12 * u), 40 * 16, 285 * 16)
-        L(16.3, 4.6, 16.3, 8.8)
-        L(16.3, 8.8, 12.3, 8.2)
-    elif name == "plus":
-        L(10, 4.5, 10, 15.5)
-        L(4.5, 10, 15.5, 10)
-    elif name == "mic":
-        R(8, 2.5, 4, 9, 2)
-        p.drawArc(QRectF(5.5 * u, 8 * u, 9 * u, 7 * u), 190 * 16, 160 * 16)
-        L(10, 15, 10, 17.5)
-        L(7, 17.5, 13, 17.5)
-    elif name == "send":
-        p.setBrush(c)
-        p.setPen(Qt.NoPen)
-        p.drawPolygon(QPolygonF([QPointF(6 * u, 4.5 * u),
-                                 QPointF(16 * u, 10 * u),
-                                 QPointF(6 * u, 15.5 * u),
-                                 QPointF(9 * u, 10 * u)]))
-    elif name == "stop":
-        p.setBrush(c)
-        p.setPen(Qt.NoPen)
-        p.drawRoundedRect(QRectF(5 * u, 5 * u, 10 * u, 10 * u),
-                          1.8 * u, 1.8 * u)
-    elif name == "download":
-        L(10, 3.5, 10, 12)
-        L(6, 8.5, 10, 12.5)
-        L(14, 8.5, 10, 12.5)
-        L(4.5, 16.5, 15.5, 16.5)
-    elif name == "check":
-        L(4.5, 10.5, 8.5, 14.5)
-        L(8.5, 14.5, 15.5, 6)
-    elif name == "x":
-        L(6, 6, 14, 14)
-        L(14, 6, 6, 14)
-    else:  # punto genérico
-        p.setBrush(c)
-        p.setPen(Qt.NoPen)
-        p.drawEllipse(QPointF(10 * u, 10 * u), 4 * u, 4 * u)
+    renderer.render(p)
     p.end()
     return QIcon(pm)
