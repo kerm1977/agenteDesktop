@@ -116,13 +116,18 @@ class ThinkingBubble(QWidget):
         lay.addWidget(self._time)
         self._t0 = time.monotonic()
         self._n = 0
+        self._modo = "Pensando"
         self._timer = QTimer(self)
         self._timer.timeout.connect(self._tick)
         self._timer.start(400)
 
+    def set_responding(self):
+        """El modelo empezó a escribir: el contador sigue corriendo."""
+        self._modo = "Respondiendo"
+
     def _tick(self):
         self._n = (self._n + 1) % 4
-        self._dots.setText("Pensando" + "." * self._n)
+        self._dots.setText(self._modo + "." * self._n)
         s = int(time.monotonic() - self._t0)
         self._time.setText(f"{s // 60}:{s % 60:02d}")
 
@@ -373,7 +378,8 @@ class ChatPanel(QWidget):
             self._thinking = None
 
     def append_token(self, text):
-        self._drop_thinking()
+        if self._thinking is not None:
+            self._thinking.set_responding()  # el cronómetro sigue visible
         if self._stream_lbl is None:
             self._stream_lbl = Bubble("", "assistant")
             self._vbox.addWidget(self._stream_lbl)
