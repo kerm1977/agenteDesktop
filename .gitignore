@@ -14,3 +14,6 @@ build/
 _manifest.json 
 mi-web/  
 que-acabas*/  
+build/ 
+dist/ 
+MiniAgente.spec 

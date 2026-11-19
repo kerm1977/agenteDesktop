@@ -1,10 +1,12 @@
 {
- "version": "0.8.4",
+ "version": "0.8.5",
  "files": {
-  ".gitignore": "31f69bf0ed503448fdde05a5750a9ff8235071a9125156a1ee9a7b3a5008107f",
+  ".gitignore": "b0fdf203d6dc12386e3ca27071b4e44afef2902f3be0cbdd215f33dd2d27bb1b",
   "analizar_modelos.py": "0b6778b1ef7285292976776e00bd3b5785b9cbef795de03d99b636b8143e2c99",
   "app.py": "c67ddceba1c9bba1b6e7f06c9c1c8866a73247ab8106ec93c7fa74b7ee0b708c",
+  "build_exe.py": "ac30868f39e32a5f05a41d8ace3eca031a2f1d9816eaab4ff2f1348612e69a73",
   "gen_ordenes_md.py": "6d8156cf438f247cccee2caf3dd3e7d8fb622ba8dbf57aadb04a0a2864cf3041",
+  "MiniAgente.spec": "6615864461febb26b6c626eb5cd35375cd4cc80dcccf6a9f2c6a184a816c59bd",
   "ORDENES.md": "852cacbc34b5108c1c94ddc015ba7b0cfacff49bdf1542db2ffc72bf8dd616d2",
   "perfil_modelos.json": "749d829c5030a91e31531357bf3be09f051ebf0c44b42b0bd4e2ec98810debd8",
   "perfil_modelos.md": "7b8512a9d2bbd6f66e3098d3d59743d4f37744fea95a212ad3e2626113193b97",
@@ -12,7 +14,7 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "8728f56a285910a461cfd3a17d03b9045f3b4fa695b35348108db21f067b9c57",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "fcbb6152d48d68c649b98f6086b0f5f5fcca32f7005b9dda4ab42329a11600e0",
+  "version.json": "747166500dc8e158fd312fd70866dd1538a06a690f6a96b178d9fca1938966bf",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "f03857de863900a635de697fef280c4556aa81393a10caf9a43a000a259c18a8",
   "core/bench.py": "45e590ab0e46a976a48b4f6bf5f6bbbee1e0a5ed5d42853351190edd04b1d72a",
