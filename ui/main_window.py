@@ -448,13 +448,14 @@ class MainWindow(QMainWindow):
         t = " " + text.lower().strip() + " "
         if "sabes" in t or "puedes " in t and "crea" not in t:
             return False
-        crear = re.search(
-            r"crea|genera|haz |hace |agrega|nueva |nuevo |quiero|necesito", t)
-        borrar = re.search(r"borra|elimin|quita|delete|suprim", t)
-        renom = re.search(r"renombra|cambia el nombre|rename", t)
-        abrir = re.search(r"abre|abrir|muéstrame|muestrame", t)
-        leer = re.search(r"lee|analiza|resume|resumen|muestra el contenido", t)
-        mover = re.search(r"mueve|mover|copia|copiar|traslada", t)
+        from core import ordenes
+        ints = ordenes.intenciones(t)
+        crear = "crear" in ints
+        borrar = "borrar" in ints
+        renom = "renombrar" in ints
+        abrir = "abrir" in ints
+        leer = "analizar" in ints or "verificar" in ints
+        mover = "mover" in ints
         cosa = re.search(r"carpeta|directorio|archivo|documento|fichero|"
                          r"aplicaci[oó]n|proyecto", t)
 
