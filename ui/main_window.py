@@ -641,35 +641,42 @@ class MainWindow(QMainWindow):
         # corta el nombre en el primer verbo/palabra de acción incrustada
         nom = re.split(
             r"\b(?:tienes|tiene|puedes|puedo|quiero|necesito|queremos|"
-            r"utilizando|usando|mediante|capacidad|debes|debe)\b",
+            r"utilizando|usando|mediante|capacidad|debes|debe|que|qu[eé]|"
+            r"d[oó]nde|donde|arriba|indicaste|por favor|porfavor|"
+            r"eso es|o no|verdad|estoy buscando)\b",
             nom)[0].strip()
         return nom or None
 
     def _crear_web(self, text):
-        """Genera una página web de verdad: carpeta + index.html con CDN."""
+        """Genera una página web real sin CDN: carpeta + index.html + MD."""
         nombre = (self._nombre(text) or "mi-web").replace(" ", "-")
         base = os.path.join(self._donde(text.lower()), nombre)
         os.makedirs(base, exist_ok=True)
         m = re.search(r"que diga (.*?)(?:\.|$)|diga (.*?)(?:\.|$)", text, re.I)
         saludo = (m.group(1) or m.group(2)).strip() if m else (
             "Hola mundo — primera página creada con Mini Agente")
-        html = ("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n"
-                "<meta charset=\"UTF-8\">\n"
+        puerto = db.next_puerto()
+        html = ("<!-- index.html -->\n<!DOCTYPE html>\n<html lang=\"es\">"
+                "\n<head>\n<meta charset=\"UTF-8\">\n"
                 "<meta name=\"viewport\" content=\"width=device-width, "
                 "initial-scale=1\">\n"
                 "<title>" + nombre + "</title>\n"
-                "<link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/"
-                "dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n"
-                "</head>\n"
-                "<body class=\"d-flex align-items-center justify-content-"
-                "center vh-100 bg-dark text-light\">\n"
-                "<h1 class=\"display-4\">" + saludo + "</h1>\n"
-                "<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/"
-                "dist/js/bootstrap.bundle.min.js\"></script>\n"
-                "</body>\n</html>\n")
+                "<style>\nbody{margin:0;min-height:100vh;display:flex;"
+                "align-items:center;justify-content:center;"
+                "background:#1b1b22;color:#eee;font-family:system-ui,"
+                "sans-serif;}\n"
+                "h1{font-size:2.4rem;}\n</style>\n</head>\n<body>\n"
+                "<h1>" + saludo + "</h1>\n</body>\n</html>\n")
         index = os.path.join(base, "index.html")
         with open(index, "w", encoding="utf-8") as f:
             f.write(html)
+        with open(os.path.join(base, nombre + ".md"), "w",
+                  encoding="utf-8") as f:
+            f.write("# " + nombre + "\n\n"
+                    "Single page creada por Mini Agente.\n\n"
+                    "- `index.html`: página principal (sin CDNs, todo "
+                    "local).\n"
+                    f"- Puerto OTA asignado: {puerto}\n")
         return self._ejecutar(
             text, "crear página web", "@OPEN:" + base,
             "Página creada en: " + index
@@ -687,6 +694,11 @@ class MainWindow(QMainWindow):
         self.chat.add_system(ok_msg)
         db.log_chat("user", text)
         db.log_chat("assistant", ok_msg + "\n" + detalle)
+        # queda en el contexto: el modelo puede responder "dónde la creaste"
+        self._messages.append({
+            "role": "system",
+            "content": "Acción realizada: " + titulo + " -> " + detalle
+                       + " | " + ok_msg})
         consola.log_info("tool", titulo)
         return True
 
@@ -695,7 +707,10 @@ class MainWindow(QMainWindow):
         if not text.strip():
             return False
         t = " " + text.lower().strip() + " "
-        if "sabes" in t or "puedes " in t and "crea" not in t:
+        from core import ordenes
+        ints = ordenes.intenciones(t)
+        # preguntas puras van al modelo; si además piden acción, manda acción
+        if not ints and ("sabes" in t or "puedes " in t):
             return False
         # autoevolución: "mejora la app/tu interfaz" -> el agente se edita
         if re.search(r"mejora|autoevoluci|modifica tu|tu propio c[oó]digo|"
@@ -705,8 +720,6 @@ class MainWindow(QMainWindow):
             self.chat.add_system(
                 "Autoevolución: trabajando sobre mi propio código.")
             return False
-        from core import ordenes
-        ints = ordenes.intenciones(t)
         crear = "crear" in ints
         borrar = "borrar" in ints
         renom = "renombrar" in ints
@@ -753,15 +766,12 @@ class MainWindow(QMainWindow):
                 return self._run(text, "delete_path", {"path": dest},
                                  "Eliminado: " + dest)
             return False   # borrar sin nombre claro -> que pregunte el modelo
-        # "crea una página/sitio/index.html" -> plantilla real al instante
+        # "crea página/sitio/app/proyecto" -> plantilla real al instante
         if crear and re.search(
                 r"single.?page|simple.?page|p[aá]gina|index|sitio|"
-                r"web ?app|web|html", t):
+                r"web ?app|web|html|aplicaci[oó]n|app|proyecto|juego|"
+                r"programa", t):
             return self._crear_web(text)
-        # "crea una app/juego/programa" genérico -> lo intenta el modelo
-        if re.search(r"app|aplicaci|juego|programa|script|c[oó]digo|"
-                     r"calculadora|hola mundo", t):
-            return False
         m = re.search(r"https?://\S*github\S*", text, re.I)
         if m and re.search(r"clon|repo|github|agrega", t):
             return self._run(text, "clone_repo", {"url": m.group(0).rstrip('.,)')},
