@@ -372,6 +372,54 @@ class MainWindow(QMainWindow):
             consola.log_error("router", repr(e))
         return None
 
+    def _enrutar_local(self, text, instalados):
+        """Sin internet: el generalista local más capaz decide el modelo."""
+        try:
+            import json
+            ruta = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "perfil_modelos.json")
+            with open(ruta, encoding="utf-8") as f:
+                perfil = json.load(f)
+        except Exception:
+            perfil = {}
+        gens = [m for m in instalados if not re.search(
+            r"coder|code|starcoder", m)]
+        if not gens:
+            return None
+        def _cap(m):   # el más grande que responde charla = más Gemini
+            mm = re.search(r"(\d+(?:\.\d+)?)\s*b", m)
+            big = float(mm.group(1)) if mm else 0
+            return big if perfil.get(m, {}).get("ok_gen", True) else 0
+        orq = max(gens, key=_cap)
+        if _cap(orq) == 0:
+            orq = gens[0]
+        try:
+            data = backends._http_json(
+                backends.BACKENDS["ollama"]["url"] + "/api/chat",
+                {"model": orq, "stream": False,
+                 "options": {"num_predict": 20, "temperature": 0},
+                 "messages": [
+                     {"role": "system", "content":
+                      "Eres un enrutador de modelos. Elige el modelo "
+                      "mas adecuado de la lista para responder el "
+                      "mensaje: codigo/archivos/depurar -> un modelo "
+                      "coder; charla general -> un modelo generalista. "
+                      "Responde SOLO el nombre exacto del modelo."},
+                     {"role": "user", "content":
+                      "Modelos: " + ", ".join(instalados) +
+                      "\nMensaje: " + text[:400]}]},
+                timeout=20)
+            pick = (data.get("message", {}).get("content", "")
+                    .strip().strip('"\'` '))
+            for m in instalados:
+                if pick.lower() == m.lower():
+                    self.chat.add_system(
+                        "Orquestador local (" + orq + ") \u2192 " + m)
+                    return m
+        except Exception as e:
+            consola.log_error("router-local", repr(e))
+        return None
+
     def _precargar(self):
         """Carga el modelo activo en RAM: primera respuesta al instante."""
         backend = self.chat.cmb_backend.currentData()
@@ -396,8 +444,11 @@ class MainWindow(QMainWindow):
             return actual, None
         if actual.startswith("(") and len(instalados) == 1:
             return instalados[0], True
-        # Gemini orquesta: decide qué modelo responde cada mensaje
+        # orquestador: Gemini en la nube; sin internet, el mejor
+        # generalista local medido; si falla, la heurística de abajo
         pick = self._enrutar_gemini(text, instalados)
+        if not pick:
+            pick = self._enrutar_local(text, instalados)
         if pick:
             return pick, pick != actual
         t = text.lower()
