@@ -95,6 +95,11 @@ class AjustesDialog(QDialog):
                                "y respuesta si el modelo va lento)")
         self._auto.setChecked(db.get_cfg("auto_tune", "1") == "1")
         lay.addWidget(self._auto)
+        self._dinamico = QCheckBox(
+            "Inteligencia dinámica: elegir el mejor modelo instalado "
+            "según cada pregunta (rápido para simple, coder para código)")
+        self._dinamico.setChecked(db.get_cfg("dinamico", "1") == "1")
+        lay.addWidget(self._dinamico)
 
         lay.addWidget(QLabel(
             "Más contexto/tokens = respuestas más largas pero más lentas.\n"
@@ -189,6 +194,7 @@ class AjustesDialog(QDialog):
                            p.get("temperature", 0.7))
         db.set_cfg("num_thread", self._threads.value())
         db.set_cfg("auto_tune", "1" if self._auto.isChecked() else "0")
+        db.set_cfg("dinamico", "1" if self._dinamico.isChecked() else "0")
         db.set_cfg("detalle:" + self._model,
                    ("resumida", "media", "explicativa")[
                        self._detalle.currentIndex()])

@@ -101,6 +101,20 @@ def list_models(backend="ollama"):
         return []
 
 
+def preload(backend, model):
+    """Carga el modelo en RAM (Ollama) para que responda al instante."""
+    cfg = BACKENDS.get(backend, BACKENDS["ollama"])
+    if cfg["tipo"] != "ollama" or not model:
+        return False
+    try:
+        _http_json(cfg["url"] + "/api/generate",
+                   {"model": model, "prompt": "", "stream": False,
+                    "keep_alive": "24h"}, timeout=120)
+        return True
+    except Exception:
+        return False
+
+
 def chat_stream(backend, model, messages, options=None):
     """Generador que rinde fragmentos NDJSON al estilo Ollama.
 

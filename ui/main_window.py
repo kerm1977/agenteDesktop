@@ -160,6 +160,7 @@ class MainWindow(QMainWindow):
     def _save_model_sel(self, text):
         if text and not text.startswith("("):
             db.set_cfg("ultimo_modelo", text)
+            self._precargar()   # el nuevo modelo entra en RAM de una vez
 
     def _model_rule(self, text):
         if text and not text.startswith("("):
@@ -272,6 +273,45 @@ class MainWindow(QMainWindow):
         elif models:
             db.set_cfg("ultimo_modelo", models[0])
             self.chat.cmb_model.setCurrentText(models[0])
+        self._precargar()
+
+    def _precargar(self):
+        """Carga el modelo activo en RAM: primera respuesta al instante."""
+        backend = self.chat.cmb_backend.currentData()
+        model = self.chat.cmb_model.currentText()
+        if not model or model.startswith("("):
+            return
+        import threading
+        def go():
+            if backends.preload(backend, model):
+                consola.log_info("ram", f"{model} precargado en RAM")
+        threading.Thread(target=go, daemon=True).start()
+
+    def _elegir_modelo(self, text):
+        """Inteligencia dinámica: el mejor modelo instalado por pregunta."""
+        actual = self.chat.cmb_model.currentText()
+        instalados = [self.chat.cmb_model.itemText(i)
+                      for i in range(self.chat.cmb_model.count())
+                      if not self.chat.cmb_model.itemText(i).startswith("(")]
+        if (db.get_cfg("dinamico", "1") != "1" or len(instalados) < 2
+                or not instalados):
+            return actual, None
+        t = text.lower()
+        codigo = re.search(
+            r"c[oó]digo|program|funci[oó]n|clase|bug|error|depura|html|css|"
+            r"python|javascript|sql|flask|django|script|archivo|proyecto",
+            t)
+        if codigo:
+            pref = [m for m in instalados
+                    if re.search(r"coder|code|deepseek|starcoder", m)]
+            if pref:
+                return pref[0], pref[0] != actual
+        # pregunta simple o general -> el más rápido medido
+        def _vel(m):
+            b = db.get_bench(m)
+            return b[1] if b and b[1] else 99999
+        rapido = min(instalados, key=_vel)
+        return rapido, rapido != actual
 
     # ---------- chat ----------
     # ---------- acciones directas (sin modelo) ----------
@@ -421,10 +461,13 @@ class MainWindow(QMainWindow):
         if self._accion_directa(text):
             return
         backend = self.chat.cmb_backend.currentData()
-        model = self.chat.cmb_model.currentText()
+        model, _avisa = self._elegir_modelo(text)
+        if _avisa:
+            self.chat.add_system(f"Inteligencia dinámica → {model}")
         if not model or model.startswith("("):
             self.chat.add_system("No hay modelo disponible en ese motor.")
             return
+        self._precargar()
         if self._worker is not None:
             self._queue.append((text, attachments))
             self.chat.add_user(text or "(adjuntos)")
