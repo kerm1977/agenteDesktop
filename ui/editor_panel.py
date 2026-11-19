@@ -62,6 +62,7 @@ class CodeEditor(QPlainTextEdit):
         self._line_area = LineNumberArea(self)
         self.path = None
         self._hl = None
+        self._extra = []        # cursores extra (Ctrl+clic = multiselección)
         font = QFont("Consolas", 10)
         font.setStyleHint(QFont.Monospace)
         self.setFont(font)
@@ -114,10 +115,76 @@ class CodeEditor(QPlainTextEdit):
             num += 1
         painter.end()
 
+    # ---------- multiselección (Ctrl+clic agrega cursores) ----------
+    def mousePressEvent(self, event):
+        if event.modifiers() & Qt.ControlModifier:
+            c = self.cursorForPosition(event.position().toPoint())
+            self._extra.append(c)
+            self._show_extra()
+            return
+        if self._extra:
+            self._extra = []
+            self.setExtraSelections([])
+        super().mousePressEvent(event)
+
+    def _show_extra(self):
+        from PySide6.QtWidgets import QTextEdit
+        sels = []
+        fmt = QTextCharFormat()
+        fmt.setBackground(QColor(60, 110, 160, 140))
+        for c in self._extra:
+            sel = QTextEdit.ExtraSelection()
+            sel.format = fmt
+            sel.cursor = QTextCursor(c)
+            sel.cursor.movePosition(QTextCursor.Right,
+                                    QTextCursor.KeepAnchor, 1)
+            sels.append(sel)
+        self.setExtraSelections(sels)
+
+    def _multi_insert(self, txt):
+        curs = sorted([self.textCursor()] + self._extra,
+                      key=lambda c: -c.position())
+        for c in curs:
+            if c.hasSelection():
+                c.removeSelectedText()
+            c.insertText(txt)
+        self._show_extra()
+
+    def _multi_delete(self, back=False):
+        curs = sorted([self.textCursor()] + self._extra,
+                      key=lambda c: -c.position())
+        for c in curs:
+            if c.hasSelection():
+                c.removeSelectedText()
+            elif back:
+                c.deletePreviousChar()
+            else:
+                c.deleteChar()
+        self._show_extra()
+
     def keyPressEvent(self, event):
         if event.key() == Qt.Key_S and event.modifiers() & Qt.ControlModifier:
             self.save()
             return
+        if self._extra:
+            txt = event.text()
+            if txt and all(ch.isprintable() for ch in txt):
+                self._multi_insert(txt)
+                return
+            if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+                self._multi_insert("\n")
+                return
+            if event.key() == Qt.Key_Tab:
+                self._multi_insert("    ")
+                return
+            if event.key() == Qt.Key_Backspace:
+                self._multi_delete(back=True)
+                return
+            if event.key() == Qt.Key_Delete:
+                self._multi_delete()
+                return
+            self._extra = []
+            self.setExtraSelections([])
         if event.key() == Qt.Key_Tab:
             self.textCursor().insertText("    ")
             return

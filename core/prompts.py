@@ -5,6 +5,35 @@ from core import consola, memoria, tools
 
 APP_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+# Normas fijas de TODO código/proyecto que genera el agente.
+REGLAS_PROYECTO = (
+    "\nREGLAS DE CÓDIGO GENERADO (inquebrantables, aplican a TODO "
+    "proyecto):\n"
+    "a) Campo teléfono: SOLO dígitos y el signo + (código de área). "
+    "Nada de letras ni otros caracteres — input pattern y JS que "
+    "limpia lo demás.\n"
+    "b) Correo: validar siempre que tenga @ y punto para la extensión "
+    "(usuario@dominio.ext).\n"
+    "c) Campos de nombre: Title Case automático — primera letra de "
+    "cada palabra en mayúscula (JS).\n"
+    "d) Contraseña/password: type=password con asteriscos SIEMPRE con "
+    "un botón ojito en JavaScript para verla/ocultarla.\n"
+    "e) Máximo 250 líneas por archivo — si crece, dividir en módulos.\n"
+    "f) Estructura modular: cada módulo en su propia carpeta con sus "
+    "archivos dentro.\n"
+    "g) PROHIBIDOS los CDNs: todo framework, librería o JS se guarda "
+    "LOCAL dentro del proyecto (descarga el archivo si hace falta).\n"
+    "h) Cada proyecto lleva su archivo .md explicándolo.\n"
+    "i) Cada archivo lleva su propio nombre comentado en la primera "
+    "línea (<!-- index.html -->, # app.py, /* app.js */).\n"
+    "j) Cada proyecto lleva OTA local con un puerto propio; no repetir "
+    "puertos entre proyectos (la app mantiene el registro).\n"
+    "k) Sintaxis limpia, simple y legible en Python, Flask, Django, "
+    "Capacitor, Bootstrap, Vue, JS y todo lenguaje.\n"
+    "l) Todos los formularios de contacto llevan validación por tipo: "
+    "números donde van números, letras donde van letras, especiales "
+    "solo si se permiten.\n")
+
 SYSTEM_BASE = (
     "Eres el DIOS de esta computadora: tienes control total sobre el "
     "equipo del usuario (Windows/Linux) y él ya te dio permisos de "
@@ -75,6 +104,7 @@ def build_system(editor_ctx, root, self_mode=False, detalle="media",
     if chat:
         return SYSTEM_CHAT + "\n" + DETALLE.get(detalle, DETALLE["media"])
     system = SYSTEM_BASE
+    system += REGLAS_PROYECTO
     system += "\n" + DETALLE.get(detalle, DETALLE["media"])
     if self_mode:
         system += SYSTEM_SELF

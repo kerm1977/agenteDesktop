@@ -111,6 +111,28 @@ def chat_history():
     return [(r["role"], r["content"]) for r in rows]
 
 
+# ---------- registro de puertos OTA de proyectos ----------
+def next_puerto(base=8700):
+    """Puerto libre para el OTA local de un proyecto nuevo; lo registra."""
+    try:
+        usados = json.loads(get_cfg("puertos_ota", "[]"))
+    except Exception:
+        usados = []
+    p = base
+    while p in usados:
+        p += 1
+    usados.append(p)
+    set_cfg("puertos_ota", json.dumps(usados))
+    return p
+
+
+def puertos_usados():
+    try:
+        return json.loads(get_cfg("puertos_ota", "[]"))
+    except Exception:
+        return []
+
+
 # ---------- registro de conversaciones ----------
 def save_conversacion(titulo, mensajes, cid=None):
     """Guarda o actualiza una conversación; mantiene el tope definido."""
