@@ -338,8 +338,9 @@ class MainWindow(QMainWindow):
         return self._data_dir
 
     def _nombre(self, text):
-        m = re.search(r"llamad[ao]s?\s+([\w\-. ]+?)(?:\s+en\s|\s*$|[.,])",
-                      text, re.I)
+        m = re.search(
+            r"(?:llamad[ao]s?|llame|nombre)\s+([\w\-. ]+?)(?:\s+en\s|\s*$|[.,])",
+            text, re.I)
         if m:
             return m.group(1).strip().strip('"\'')
         m = re.search(r"(?:carpeta|directorio|archivo)\s+([\w\-. ]+?)"
@@ -368,13 +369,15 @@ class MainWindow(QMainWindow):
         t = " " + text.lower().strip() + " "
         if "sabes" in t or "puedes " in t and "crea" not in t:
             return False
-        crear = re.search(r"crea|genera|haz |hace |agrega|nueva |nuevo ", t)
+        crear = re.search(
+            r"crea|genera|haz |hace |agrega|nueva |nuevo |quiero|necesito", t)
         borrar = re.search(r"borra|elimin|quita|delete|suprim", t)
         renom = re.search(r"renombra|cambia el nombre|rename", t)
         abrir = re.search(r"abre|abrir|muéstrame|muestrame", t)
         leer = re.search(r"lee|analiza|resume|resumen|muestra el contenido", t)
         mover = re.search(r"mueve|mover|copia|copiar|traslada", t)
-        cosa = re.search(r"carpeta|directorio|archivo|documento|fichero", t)
+        cosa = re.search(r"carpeta|directorio|archivo|documento|fichero|"
+                         r"aplicaci[oó]n|proyecto", t)
 
         m = re.search(r"https?://\S*github\S*", text, re.I)
         if m and re.search(r"clon|repo|github|agrega", t):
@@ -493,10 +496,10 @@ class MainWindow(QMainWindow):
                      if m["role"] != "system"][-8:]
         self._messages = ([{"role": "system", "content": system}]
                           + historial)
+        db.log_chat("user", msg)   # el log guarda solo lo que escribiste
         msg += ("\n\n(Instrucción interna: responde SIEMPRE en español. "
                 "Nunca respondas en inglés ni otro idioma.)")
         self._messages.append({"role": "user", "content": msg})
-        db.log_chat("user", msg)
         options = {k: v for k, v in db.get_model_prefs(model).items()
                    if k in ("num_ctx", "num_predict", "temperature")}
         options["num_thread"] = int(db.get_cfg(
