@@ -42,6 +42,8 @@ class ProyectosPanel(QWidget):
             "QListWidget::item:selected{background:#2e5f8a;}")
         self._lista.itemDoubleClicked.connect(
             lambda it: self.abrir.emit(it.data(Qt.UserRole)))
+        self._lista.setContextMenuPolicy(Qt.CustomContextMenu)
+        self._lista.customContextMenuRequested.connect(self._menu)
         lay.addWidget(self._lista, 1)
 
         for texto, fn in (("Abrir", self._abrir),
@@ -84,6 +86,25 @@ class ProyectosPanel(QWidget):
     def _sel(self):
         it = self._lista.currentItem()
         return it.data(Qt.UserRole) if it else None
+
+    # ---------- menú contextual (clic derecho) ----------
+    def _menu(self, pos):
+        it = self._lista.itemAt(pos)
+        if it:
+            self._lista.setCurrentItem(it)
+        else:
+            return
+        from PySide6.QtWidgets import QMenu
+        menu = QMenu(self)
+        menu.setStyleSheet("QMenu{background:#2a2a30;color:#ddd;"
+                           "border:1px solid #42424c;}"
+                           "QMenu::item:selected{background:#2e5f8a;}")
+        menu.addAction("Abrir proyecto", self._abrir)
+        menu.addAction("Renombrar", self._renombrar)
+        menu.addAction("Ubicar en el explorador", self._ubicar)
+        menu.addSeparator()
+        menu.addAction("Eliminar proyecto", self._eliminar)
+        menu.exec(self._lista.viewport().mapToGlobal(pos))
 
     # ---------- acciones ----------
     def _abrir(self):
