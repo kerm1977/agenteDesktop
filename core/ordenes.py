@@ -15,8 +15,10 @@ def _norm(t):
 
 VERBOS = {
     "crear": [
-        "crea", "crear", "creame", "cree", "genera", "generar", "generame",
-        "haz", "hace", "haceme", "hacelo", "fabrica", "fabricar",
+        "crea", "crear", "creame", "creamme", "creeme", "cremela",
+        "creamela", "cree", "genera", "generar", "generame", "generamela",
+        "haz", "hace", "haceme", "hacelo", "hazme", "hazmelo",
+        "hazme una", "fabrica", "fabricar",
         "construye", "construir", "construyeme", "arma", "armar", "armame",
         "produce", "producir", "monta", "montar", "levanta", "levantar",
         "inicia", "iniciar", "comienza", "empeza", "nueva", "nuevo",

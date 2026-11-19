@@ -442,10 +442,12 @@ class MainWindow(QMainWindow):
         instalados = [self.chat.cmb_model.itemText(i)
                       for i in range(self.chat.cmb_model.count())
                       if not self.chat.cmb_model.itemText(i).startswith("(")]
-        auto = (actual.startswith("(")
-                or db.get_cfg("dinamico", "1") == "1")
-        if not auto or not instalados:
+        # solo orquesta en modo (Automático): un modelo elegido a mano
+        # se respeta siempre
+        if not actual.startswith("(") or not instalados:
             return actual, None
+        if db.get_cfg("dinamico", "1") != "1":
+            return instalados[0], True
         if actual.startswith("(") and len(instalados) == 1:
             return instalados[0], True
         # orquestador: Gemini en la nube; sin internet, el mejor
@@ -505,7 +507,7 @@ class MainWindow(QMainWindow):
     def _donde(self, t):
         """Carpeta destino según palabras del usuario."""
         home = os.path.expanduser("~")
-        if re.search(r"escritorio|desktop", t):
+        if re.search(r"escritorio|desktop|computadora|pc\b|equipo", t):
             for d in ("Desktop", "Escritorio"):
                 p = os.path.join(home, d)
                 if os.path.isdir(p):
