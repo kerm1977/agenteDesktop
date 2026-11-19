@@ -462,6 +462,25 @@ class MainWindow(QMainWindow):
         if re.search(r"d[oó]nde|cu[aá]l|qu[eé] es|c[oó]mo se llama|"
                      r"por ?qu[eé]|cu[aá]ndo", t):
             return False
+        # "elimina/borra X" tiene prioridad sobre cualquier "crear"
+        # mencionado en la frase ("lo que acabas de crear…")
+        if borrar:
+            t2 = re.sub(r"gui[oó]n( medio)?", "-", t)
+            m = re.search(
+                r"([a-z]:\\[^\s\"*]+|"           # ruta absoluta
+                r"\"([^\"]+)\"|'([^']+)'|"      # entre comillas
+                r"([\w\-]+\.[a-z]{2,5})|"       # archivo.ext
+                r"([\w]+\-[\w\-]+)|"            # nombre-con-guion
+                r"(?:carpeta|p[aá]gina|web|sitio|directorio)\s+"
+                r"(?:llamad[ao]|nombrad[ao])?\s*([\w\-]+))",
+                t2, re.I)
+            nom = next((g for g in m.groups() if g), "").strip() if m else ""
+            if nom:
+                dest = nom if os.path.isabs(nom) else os.path.join(
+                    self._donde(t2), nom)
+                return self._run(text, "delete_path", {"path": dest},
+                                 "Eliminado: " + dest)
+            return False   # borrar sin nombre claro -> que pregunte el modelo
         # "crea una página/sitio/index.html" -> plantilla real al instante
         if crear and re.search(
                 r"single.?page|p[aá]gina|index|sitio|web ?app|web|html", t):
