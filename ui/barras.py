@@ -73,6 +73,10 @@ def build_toolbar(win):
     tb.setIconSize(QSize(16, 16))
     win.addToolBar(tb)
 
+    act_conv = QAction(iconos.icon("file", 16), "Nueva conversación", win)
+    act_conv.setToolTip("Guarda la conversación actual y empieza una nueva")
+    act_conv.triggered.connect(win._nueva_conversacion)
+    tb.addAction(act_conv)
     act_new = QAction(iconos.icon("newfolder", 16), "Nuevo proyecto", win)
     act_new.triggered.connect(win._nuevo_proyecto)
     act_new.triggered.connect(_ev("Nuevo proyecto"))

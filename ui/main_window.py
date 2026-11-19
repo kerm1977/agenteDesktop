@@ -14,6 +14,7 @@ from ui.chat_panel import ChatPanel
 from ui.console_panel import ConsolePanel
 from ui.editor_panel import EditorPanel
 from ui.ajustes_dialog import AjustesAgenteDialog, AjustesDialog
+from ui.conversaciones import ConversacionesPanel
 from ui.equipo_dialog import EquipoDialog
 from ui.models_panel import ModelsPanel
 from ui.nuevo_proyecto import NuevoProyectoDialog, crear_proyecto
@@ -52,6 +53,7 @@ class MainWindow(QMainWindow):
         self._worker = None
         self._queue = []          # mensajes en espera, en orden
         self._messages = []
+        self._conv_id = None     # conversación actual en el registro
         self._self_mode = False
         self._root = os.getcwd()
         self._data_dir = os.path.join(os.path.expanduser("~"),
@@ -69,11 +71,17 @@ class MainWindow(QMainWindow):
         self._stack.setMinimumWidth(220)
         self._stack.setMaximumWidth(360)
 
+        self.conversaciones = ConversacionesPanel()
+        ed_col = QSplitter(Qt.Vertical)
+        ed_col.addWidget(self.editor)
+        ed_col.addWidget(self.conversaciones)
+        ed_col.setSizes([620, 180])
+
         split = QSplitter(Qt.Horizontal)
         split.addWidget(self._stack)
         split.addWidget(self.chat)
         split.addWidget(self.proyecto_tree)
-        split.addWidget(self.editor)
+        split.addWidget(ed_col)
         split.setSizes([230, 540, 240, 430])
         self._split = split
         split.setCollapsible(0, False)
@@ -89,6 +97,8 @@ class MainWindow(QMainWindow):
         barras.build_toolbar(self)
         self._fill_backends()
         self._wire()
+        self.conversaciones.abrir.connect(self._abrir_conversacion)
+        self.conversaciones.borrar.connect(self._borrar_conversacion)
 
         QTimer.singleShot(600, self._check_ollama)
         QTimer.singleShot(900, self._ask_perm_descargas)
@@ -122,6 +132,77 @@ class MainWindow(QMainWindow):
     def _ajustes_agente(self):
         AjustesAgenteDialog(self).exec()
         consola.log_info("ui", "ajustes del agente guardados")
+
+    # ---------- registro de conversaciones ----------
+    def _guardar_conversacion(self):
+        """Guarda/actualiza la conversación actual en el registro."""
+        msgs = [m for m in self._messages
+                if m["role"] in ("user", "assistant")]
+        if not msgs:
+            return
+        titulo = next((re.sub(r"\s+", " ", m["content"])[:60]
+                       for m in msgs if m["role"] == "user"),
+                      "Conversación")
+        self._conv_id = db.save_conversacion(titulo, msgs, self._conv_id)
+        self.conversaciones.refresh()
+
+    def _limpiar_agente(self):
+        self._messages = []
+        self._queue = []
+        self._conv_id = None
+        self.chat.clear()
+
+    def _nueva_conversacion(self):
+        if self._worker is not None:
+            self.chat.add_system(
+                "Espera a que termine la respuesta actual.")
+            return
+        self._guardar_conversacion()
+        self._limpiar_agente()
+        self.chat.add_system(
+            "Nueva conversación — la anterior quedó guardada en el "
+            "registro (abajo del editor).")
+
+    def _abrir_conversacion(self, cid):
+        if self._worker is not None:
+            return
+        self._guardar_conversacion()
+        msgs, titulo, _ts = db.get_conversacion(cid)
+        if not msgs:
+            return
+        self._limpiar_agente()
+        self._conv_id = cid
+        self._messages = [{"role": m["role"], "content": m["content"]}
+                          for m in msgs]
+        for m in msgs:
+            if m["role"] == "user":
+                self.chat.add_user(m["content"])
+            elif m["role"] == "assistant":
+                self.chat.add_assistant(m["content"])
+        self.chat.add_system("Conversación restaurada: " + (titulo or ""))
+
+    def _borrar_conversacion(self, cid):
+        for paso in range(1, 4):
+            ans = QMessageBox.question(
+                self, f"Eliminar conversación (paso {paso}/3)",
+                "¿Eliminar esta conversación del registro?\n\n"
+                "Se pierde TODO el historial de esta conversación "
+                "y no se puede recuperar.\n\n"
+                f"Confirmación {paso} de 3.")
+            if ans != QMessageBox.Yes:
+                return
+        db.del_conversacion(cid)
+        if self._conv_id == cid:
+            self._conv_id = None
+        self.conversaciones.refresh()
+        self.chat.add_system("Conversación eliminada del registro.")
+
+    def closeEvent(self, ev):
+        try:
+            self._guardar_conversacion()
+        except Exception:
+            pass
+        super().closeEvent(ev)
 
     def _ajustes(self):
         model = self.chat.cmb_model.currentText()
@@ -231,6 +312,9 @@ class MainWindow(QMainWindow):
         os.makedirs(base, exist_ok=True)
         dlg = NuevoProyectoDialog(base, self)
         if dlg.exec() and dlg.ruta:
+            # nuevo proyecto = agente limpio; la conversación se guarda
+            self._guardar_conversacion()
+            self._limpiar_agente()
             ruta = crear_proyecto(dlg.ruta, dlg._plantilla.currentText())
             self.set_root(ruta)
             self._stack.setCurrentIndex(0)

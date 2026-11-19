@@ -32,6 +32,9 @@ def init():
             k TEXT PRIMARY KEY, v TEXT)""")
         con.execute("""CREATE TABLE IF NOT EXISTS cache_resp(
             k TEXT PRIMARY KEY, respuesta TEXT, ts REAL)""")
+        con.execute("""CREATE TABLE IF NOT EXISTS conversacion(
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            titulo TEXT, ts REAL, mensajes TEXT)""")
 
 
 # ---------- configuración persistente ----------
@@ -106,6 +109,55 @@ def chat_history():
         rows = con.execute(
             "SELECT role, content FROM chat_log ORDER BY id").fetchall()
     return [(r["role"], r["content"]) for r in rows]
+
+
+# ---------- registro de conversaciones ----------
+def save_conversacion(titulo, mensajes, cid=None):
+    """Guarda o actualiza una conversación; mantiene el tope definido."""
+    data = json.dumps(mensajes, ensure_ascii=False)
+    with _conn() as con:
+        if cid:
+            con.execute(
+                "UPDATE conversacion SET titulo=?,ts=?,mensajes=? "
+                "WHERE id=?", (titulo, time.time(), data, cid))
+        else:
+            cur = con.execute(
+                "INSERT INTO conversacion(titulo,ts,mensajes) "
+                "VALUES(?,?,?)", (titulo, time.time(), data))
+            cid = cur.lastrowid
+        tope = int(get_cfg("max_conversaciones", 50))
+        con.execute("DELETE FROM conversacion WHERE id NOT IN "
+                    "(SELECT id FROM conversacion ORDER BY ts DESC "
+                    "LIMIT ?)", (tope,))
+    return cid
+
+
+def list_conversaciones(query=""):
+    """[(id, titulo, ts)] más recientes primero; filtra por texto."""
+    with _conn() as con:
+        if query:
+            rows = con.execute(
+                "SELECT id,titulo,ts FROM conversacion "
+                "WHERE titulo LIKE ? ORDER BY ts DESC",
+                ("%" + query + "%",)).fetchall()
+        else:
+            rows = con.execute(
+                "SELECT id,titulo,ts FROM conversacion "
+                "ORDER BY ts DESC").fetchall()
+    return [(r["id"], r["titulo"], r["ts"]) for r in rows]
+
+
+def get_conversacion(cid):
+    with _conn() as con:
+        row = con.execute("SELECT * FROM conversacion WHERE id=?",
+                          (cid,)).fetchone()
+    return (json.loads(row["mensajes"]), row["titulo"], row["ts"]) \
+        if row else (None, None, None)
+
+
+def del_conversacion(cid):
+    with _conn() as con:
+        con.execute("DELETE FROM conversacion WHERE id=?", (cid,))
 
 
 # ---------- caché de respuestas frecuentes ----------

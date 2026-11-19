@@ -372,6 +372,19 @@ class ChatPanel(QWidget):
         self._vbox.addWidget(Bubble("Tú: " + text, "user"))
         self._scroll_down()
 
+    def add_assistant(self, text):
+        self._vbox.addWidget(Bubble(text, "assistant"))
+        self._scroll_down()
+
+    def clear(self):
+        """Vacía el chat (nueva conversación)."""
+        self._drop_thinking()
+        self._stream_lbl = None
+        while self._vbox.count():
+            it = self._vbox.takeAt(0)
+            if it.widget():
+                it.widget().deleteLater()
+
     def add_rule(self, text):
         lbl = QLabel("— " + text + " —")
         lbl.setAlignment(Qt.AlignCenter)
