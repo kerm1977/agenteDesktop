@@ -306,6 +306,15 @@ class MainWindow(QMainWindow):
         if actual.startswith("(") and len(instalados) == 1:
             return instalados[0], True
         t = text.lower()
+        perfil = {}
+        try:   # perfil medido por analizar_modelos.py (persistente)
+            import json
+            ruta = os.path.join(os.path.dirname(os.path.dirname(
+                os.path.abspath(__file__))), "perfil_modelos.json")
+            with open(ruta, encoding="utf-8") as f:
+                perfil = json.load(f)
+        except Exception:
+            pass
         codigo = re.search(
             r"c[oó]digo|program|funci[oó]n|clase|bug|error|depura|html|css|"
             r"python|javascript|sql|flask|django|script|archivo|proyecto",
@@ -314,12 +323,22 @@ class MainWindow(QMainWindow):
             pref = [m for m in instalados
                     if re.search(r"coder|code|deepseek|starcoder", m)]
             if pref:
-                return pref[0], pref[0] != actual
+                pick = min(
+                    pref,
+                    key=lambda m: perfil.get(m, {}).get("code_ms")
+                    or 99999)
+                return pick, pick != actual
         # charla general -> generalista más capaz instalado
         gens = [m for m in instalados if re.search(
             r"^(?!.*coder|.*code)(llama|qwen|mistral|gemma|phi|yi|deepseek-?llm)",
             m)]
         if gens:
+            ok = [m for m in gens
+                  if perfil.get(m, {}).get("ok_gen", True)]
+            if ok and perfil:
+                pick = min(ok, key=lambda m: perfil.get(
+                    m, {}).get("general_ms") or 99999)
+                return pick, pick != actual
             def _bigs(m):   # tamaño aproximado: 7b>3b>1.5b>0.5b
                 mm = re.search(r"(\d+(?:\.\d+)?)\s*b", m)
                 return float(mm.group(1)) if mm else 0

@@ -1,0 +1,44 @@
+{
+  "codegemma:2b": {
+    "general_ms": 2924,
+    "code_ms": 11161,
+    "es_coder": true,
+    "ok_gen": true,
+    "ok_code": true
+  },
+  "yi-coder:1.5b": {
+    "general_ms": 9059,
+    "code_ms": 2522,
+    "es_coder": true,
+    "ok_gen": true,
+    "ok_code": false
+  },
+  "deepseek-coder:1.3b": {
+    "general_ms": 9516,
+    "code_ms": 1119,
+    "es_coder": true,
+    "ok_gen": true,
+    "ok_code": true
+  },
+  "phi3:mini": {
+    "general_ms": 18025,
+    "code_ms": 8322,
+    "es_coder": false,
+    "ok_gen": true,
+    "ok_code": true
+  },
+  "gemma2:2b": {
+    "general_ms": 14898,
+    "code_ms": 2773,
+    "es_coder": false,
+    "ok_gen": true,
+    "ok_code": true
+  },
+  "qwen2.5-coder:1.5b": {
+    "general_ms": 8968,
+    "code_ms": 1252,
+    "es_coder": true,
+    "ok_gen": true,
+    "ok_code": true
+  }
+}
