@@ -534,9 +534,14 @@ class MainWindow(QMainWindow):
         self.chat.add_user(text or "(adjuntos)")
         self.models.save_prefs(model)
         nivel = db.get_cfg("detalle:" + model, "media")
+        es_tecnico = re.search(
+            r"c[oó]digo|program|funci[oó]n|clase|bug|error|depura|html|css|"
+            r"python|javascript|sql|flask|django|script|archivo|proyecto|"
+            r"carpeta|lee |analiza|resume|traduc|clona|github|herramienta",
+            text.lower())
         system = prompts.build_system(
             self.editor.context(), self._root, self._self_mode,
-            detalle=nivel)
+            detalle=nivel, chat=not es_tecnico)
         historial = [m for m in self._messages
                      if m["role"] != "system"][-8:]
         self._messages = ([{"role": "system", "content": system}]

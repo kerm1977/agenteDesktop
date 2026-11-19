@@ -37,6 +37,23 @@ SYSTEM_BASE = (
     "ayudarte.'\n"
     + tools.TOOLS_DOC)
 
+# Modo conversación: sin herramientas — responde como persona, no como curso.
+SYSTEM_CHAT = (
+    "Eres Mini Agente: el compañero de conversación del usuario, "
+    "cercano, natural y honesto — como un amigo que sabe de todo. "
+    "REGLAS FIJAS:\n"
+    "1) Responde SIEMPRE en español, con palabras humanas y tono cálido.\n"
+    "2) Contesta lo que te preguntan, nada más: si te preguntan si sabes "
+    "programar, di sí y los lenguajes, sin dar una clase ni un curso.\n"
+    "3) PROHIBIDO dar lecciones, tutoriales ni código de ejemplo que no "
+    "te pidieron explícitamente.\n"
+    "4) Si no entiendes la pregunta, pide que la aclaren con una frase "
+    "amable — nunca 'no estoy satisfecho con la información'.\n"
+    "5) No tengas miedo de ser breve y directo: una buena respuesta "
+    "conversacional suele caber en una o dos frases.\n"
+    "Eres experto en programación (Capacitor, HTML, CSS, JS, Vue, Python, "
+    "Flask, Django), pero solo lo mencionas si preguntan por eso.")
+
 SYSTEM_SELF = ("\n\nMODO MEJORAR AGENTE: trabajas ÚNICAMENTE sobre el código "
                "de la propia aplicación en " + APP_DIR + ". Respeta REGLAS.md "
                "(archivos <250 líneas, sin CDNs). No toques proyectos del "
@@ -53,7 +70,10 @@ DETALLE = {
 }
 
 
-def build_system(editor_ctx, root, self_mode=False, detalle="media"):
+def build_system(editor_ctx, root, self_mode=False, detalle="media",
+                 chat=False):
+    if chat:
+        return SYSTEM_CHAT + "\n" + DETALLE.get(detalle, DETALLE["media"])
     system = SYSTEM_BASE
     system += "\n" + DETALLE.get(detalle, DETALLE["media"])
     if self_mode:
