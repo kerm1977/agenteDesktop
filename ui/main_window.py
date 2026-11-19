@@ -335,6 +335,43 @@ class MainWindow(QMainWindow):
                 "Proyecto restaurado: " + ult)
         self._precargar()
 
+    def _enrutar_gemini(self, text, instalados):
+        """Gemini decide qué modelo de la lista responde cada mensaje.
+
+        Solo si hay GEMINI_API_KEY configurada en Ajustes; si falla,
+        el enrutador medido local queda como respaldo."""
+        if not os.environ.get("GEMINI_API_KEY"):
+            return None
+        try:
+            cfg = backends.BACKENDS["gemini"]
+            modelo = db.get_cfg("gemini_router_model",
+                                "gemini-2.5-flash")
+            data = backends._http_json(
+                cfg["url"].rstrip("/") + "/chat/completions",
+                {"model": modelo, "temperature": 0,
+                 "max_tokens": 20,
+                 "messages": [
+                     {"role": "system", "content":
+                      "Eres un enrutador de modelos. Elige el modelo "
+                      "mas adecuado de la lista para responder el "
+                      "mensaje: codigo/archivos/depurar -> un modelo "
+                      "coder; charla general -> un modelo generalista. "
+                      "Responde SOLO el nombre exacto del modelo."},
+                     {"role": "user", "content":
+                      "Modelos: " + ", ".join(instalados) +
+                      "\nMensaje: " + text[:400]}]},
+                timeout=8, key_env=cfg["key_env"])
+            pick = ((data.get("choices") or [{}])[0]
+                    .get("message", {}).get("content", "")
+                    .strip().strip('"\'` '))
+            for m in instalados:
+                if pick.lower() == m.lower():
+                    self.chat.add_system("Gemini orquesta \u2192 " + m)
+                    return m
+        except Exception as e:
+            consola.log_error("router", repr(e))
+        return None
+
     def _precargar(self):
         """Carga el modelo activo en RAM: primera respuesta al instante."""
         backend = self.chat.cmb_backend.currentData()
@@ -359,6 +396,10 @@ class MainWindow(QMainWindow):
             return actual, None
         if actual.startswith("(") and len(instalados) == 1:
             return instalados[0], True
+        # Gemini orquesta: decide qué modelo responde cada mensaje
+        pick = self._enrutar_gemini(text, instalados)
+        if pick:
+            return pick, pick != actual
         t = text.lower()
         perfil = {}
         try:   # perfil medido por analizar_modelos.py (persistente)
