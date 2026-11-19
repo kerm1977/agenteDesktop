@@ -12,3 +12,5 @@ dist/
 build/
 *.spec
 _manifest.json 
+mi-web/  
+que-acabas*/  
