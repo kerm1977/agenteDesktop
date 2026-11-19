@@ -428,6 +428,12 @@ class MainWindow(QMainWindow):
         cosa = re.search(r"carpeta|directorio|archivo|documento|fichero|"
                          r"aplicaci[oó]n|proyecto", t)
 
+        # "crea una app/página/sitio/código" = trabajo de código -> el
+        # modelo lo escribe con write_file, NO es crear una carpeta vacía
+        if re.search(r"single.?page|p[aá]gina|sitio|web ?app|app|"
+                     r"aplicaci|juego|calculadora|hola mundo|html|"
+                     r"programa|script|c[oó]digo", t):
+            return False
         m = re.search(r"https?://\S*github\S*", text, re.I)
         if m and re.search(r"clon|repo|github|agrega", t):
             return self._run(text, "clone_repo", {"url": m.group(0).rstrip('.,)')},
