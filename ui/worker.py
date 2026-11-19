@@ -148,9 +148,10 @@ class ChatWorker(QThread):
         dt = time.monotonic() - t0
         vel = ntok / dt if dt > 0 else 0
         self.stat.emit(
-            f"{self._model} · respuesta en {dt:.1f} s · {ntok} tokens"
+            f"⏱ {self._model} — {ntok} tokens · {dt:.1f} s"
             f" · {vel:.1f} tok/s"
-            + (f" · primer token {first - t0:.1f} s" if first else ""))
+            + (f" · 1.er token {first - t0:.1f} s" if first else "")
+            + (" · detenida" if self._stop else ""))
         self.perf.emit(dt, ntok)
         self.finished_text.emit(self._recortar(full_reply.strip()))
 
