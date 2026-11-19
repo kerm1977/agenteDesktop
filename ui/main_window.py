@@ -310,7 +310,16 @@ class MainWindow(QMainWindow):
                     if re.search(r"coder|code|deepseek|starcoder", m)]
             if pref:
                 return pref[0], pref[0] != actual
-        # pregunta simple o general -> el más rápido medido
+        # charla general -> generalista más capaz instalado
+        gens = [m for m in instalados if re.search(
+            r"^(?!.*coder|.*code)(llama|qwen|mistral|gemma|phi|yi|deepseek-?llm)",
+            m)]
+        if gens:
+            def _bigs(m):   # tamaño aproximado: 7b>3b>1.5b>0.5b
+                mm = re.search(r"(\d+(?:\.\d+)?)\s*b", m)
+                return float(mm.group(1)) if mm else 0
+            mejor = max(gens, key=_bigs)
+            return mejor, mejor != actual
         def _vel(m):
             b = db.get_bench(m)
             return b[1] if b and b[1] else 99999

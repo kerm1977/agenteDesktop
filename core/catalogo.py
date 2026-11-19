@@ -32,6 +32,23 @@ CATALOGO = [
     {"tag": "opencoder:1.5b", "nombre": "OpenCoder 1.5B",
      "peso": "ligero", "gb": 1.0, "ram_gb": 4, "ctx": 4096},
 
+    # ---------- generalistas (conversan y orquestan al coder) ----------
+    {"tag": "llama3.2:1b", "nombre": "Llama 3.2 1B",
+     "peso": "ligero", "gb": 0.8, "ram_gb": 3, "ctx": 128000,
+     "rol": "generalista"},
+    {"tag": "llama3.2:3b", "nombre": "Llama 3.2 3B",
+     "peso": "ligero", "gb": 1.9, "ram_gb": 6, "ctx": 128000,
+     "rol": "generalista"},
+    {"tag": "qwen2.5:1.5b", "nombre": "Qwen2.5 1.5B",
+     "peso": "ligero", "gb": 1.0, "ram_gb": 4, "ctx": 32768,
+     "rol": "generalista"},
+    {"tag": "qwen2.5:3b", "nombre": "Qwen2.5 3B",
+     "peso": "ligero", "gb": 1.9, "ram_gb": 6, "ctx": 32768,
+     "rol": "generalista"},
+    {"tag": "mistral:7b", "nombre": "Mistral 7B",
+     "peso": "medio", "gb": 4.1, "ram_gb": 12, "ctx": 32768,
+     "rol": "generalista"},
+
     # ---------- medios (caben, pero lentos sin GPU) ----------
     {"tag": "codellama:7b-instruct", "nombre": "CodeLlama 7B Instruct",
      "peso": "medio", "gb": 3.8, "ram_gb": 10, "ctx": 16384},
