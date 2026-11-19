@@ -396,6 +396,36 @@ class MainWindow(QMainWindow):
                       r"(?:\s+en\s|\s*$|[.,])", text, re.I)
         return m.group(1).strip().strip('"\'') if m else None
 
+    def _crear_web(self, text):
+        """Genera una página web de verdad: carpeta + index.html con CDN."""
+        nombre = (self._nombre(text) or "mi-web").replace(" ", "-")
+        base = os.path.join(self._donde(text.lower()), nombre)
+        os.makedirs(base, exist_ok=True)
+        m = re.search(r"que diga (.*?)(?:\.|$)|diga (.*?)(?:\.|$)", text, re.I)
+        saludo = (m.group(1) or m.group(2)).strip() if m else (
+            "Hola mundo — primera página creada con Mini Agente")
+        html = ("<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n"
+                "<meta charset=\"UTF-8\">\n"
+                "<meta name=\"viewport\" content=\"width=device-width, "
+                "initial-scale=1\">\n"
+                "<title>" + nombre + "</title>\n"
+                "<link href=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/"
+                "dist/css/bootstrap.min.css\" rel=\"stylesheet\">\n"
+                "</head>\n"
+                "<body class=\"d-flex align-items-center justify-content-"
+                "center vh-100 bg-dark text-light\">\n"
+                "<h1 class=\"display-4\">" + saludo + "</h1>\n"
+                "<script src=\"https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/"
+                "dist/js/bootstrap.bundle.min.js\"></script>\n"
+                "</body>\n</html>\n")
+        index = os.path.join(base, "index.html")
+        with open(index, "w", encoding="utf-8") as f:
+            f.write(html)
+        return self._ejecutar(
+            text, "crear página web", "@OPEN:" + base,
+            "Página creada en: " + index
+            + "\n(ábrela doble-clic o en el editor)")
+
     def _ejecutar(self, text, titulo, detalle, ok_msg):
         """Muestra la acción como tarjeta + respuesta, y abre raíz si aplica."""
         self.chat.add_user(text)
@@ -428,11 +458,17 @@ class MainWindow(QMainWindow):
         cosa = re.search(r"carpeta|directorio|archivo|documento|fichero|"
                          r"aplicaci[oó]n|proyecto", t)
 
-        # "crea una app/página/sitio/código" = trabajo de código -> el
-        # modelo lo escribe con write_file, NO es crear una carpeta vacía
-        if re.search(r"single.?page|p[aá]gina|sitio|web ?app|app|"
-                     r"aplicaci|juego|calculadora|hola mundo|html|"
-                     r"programa|script|c[oó]digo", t):
+        # preguntas (dónde, cuál, qué es…) nunca son órdenes de acción
+        if re.search(r"d[oó]nde|cu[aá]l|qu[eé] es|c[oó]mo se llama|"
+                     r"por ?qu[eé]|cu[aá]ndo", t):
+            return False
+        # "crea una página/sitio/index.html" -> plantilla real al instante
+        if crear and re.search(
+                r"single.?page|p[aá]gina|index|sitio|web ?app|web|html", t):
+            return self._crear_web(text)
+        # "crea una app/juego/programa" genérico -> lo intenta el modelo
+        if re.search(r"app|aplicaci|juego|programa|script|c[oó]digo|"
+                     r"calculadora|hola mundo", t):
             return False
         m = re.search(r"https?://\S*github\S*", text, re.I)
         if m and re.search(r"clon|repo|github|agrega", t):
