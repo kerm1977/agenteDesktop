@@ -129,7 +129,7 @@ class MainWindow(QMainWindow):
             model = next((self.chat.cmb_model.itemText(i)
                           for i in range(self.chat.cmb_model.count())
                           if not self.chat.cmb_model.itemText(i)
-                          .startswith("(")), "")
+                          .startswith(("(", "─"))), "")
         if model:
             AjustesDialog(model, self).exec()
             consola.log_info("ui", "rendimiento ajustado para " + model)
@@ -296,8 +296,24 @@ class MainWindow(QMainWindow):
         models = backends.list_models(backend)
         self.chat.cmb_model.blockSignals(True)
         self.chat.cmb_model.clear()
-        self.chat.cmb_model.addItems(["(Automático)"]
-                                     + (models or ["(sin modelos)"]))
+        items = ["(Automático)"]
+        if models:
+            from core import catalogo
+            por_rol = {}
+            for m in models:
+                por_rol.setdefault(catalogo.rol_de(m), []).append(m)
+            for g in catalogo.GRUPOS:
+                if por_rol.get(g):
+                    items.append("── " + g + " ──")
+                    items.extend(por_rol[g])
+        else:
+            items.append("(sin modelos)")
+        self.chat.cmb_model.addItems(items)
+        # los separadores de grupo no son seleccionables
+        mdl = self.chat.cmb_model.model()
+        for i in range(self.chat.cmb_model.count()):
+            if self.chat.cmb_model.itemText(i).startswith(("─", "(sin")):
+                mdl.item(i).setEnabled(False)
         self.chat.cmb_model.blockSignals(False)
         # auto-análisis: cualquier modelo nuevo se mide en 2.º plano
         try:
@@ -441,7 +457,8 @@ class MainWindow(QMainWindow):
         actual = self.chat.cmb_model.currentText()
         instalados = [self.chat.cmb_model.itemText(i)
                       for i in range(self.chat.cmb_model.count())
-                      if not self.chat.cmb_model.itemText(i).startswith("(")]
+                      if not self.chat.cmb_model.itemText(i)
+                      .startswith(("(", "─"))]
         # solo orquesta en modo (Automático): un modelo elegido a mano
         # se respeta siempre
         if not actual.startswith("(") or not instalados:
@@ -821,7 +838,7 @@ class MainWindow(QMainWindow):
             candidatos = [self.chat.cmb_model.itemText(i)
                           for i in range(self.chat.cmb_model.count())
                           if not self.chat.cmb_model.itemText(i)
-                          .startswith("(") and
+                          .startswith(("(", "─")) and
                           self.chat.cmb_model.itemText(i) != model]
             if candidatos:
                 from core import perfil as _perfil

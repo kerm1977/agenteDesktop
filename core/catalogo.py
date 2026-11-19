@@ -45,9 +45,57 @@ CATALOGO = [
     {"tag": "qwen2.5:3b", "nombre": "Qwen2.5 3B",
      "peso": "ligero", "gb": 1.9, "ram_gb": 6, "ctx": 32768,
      "rol": "generalista"},
+    {"tag": "gemma2:2b", "nombre": "Gemma 2 2B",
+     "peso": "ligero", "gb": 1.6, "ram_gb": 5, "ctx": 8192,
+     "rol": "generalista"},
+    {"tag": "phi3:mini", "nombre": "Phi-3 Mini",
+     "peso": "ligero", "gb": 2.2, "ram_gb": 6, "ctx": 131072,
+     "rol": "generalista"},
     {"tag": "mistral:7b", "nombre": "Mistral 7B",
      "peso": "medio", "gb": 4.1, "ram_gb": 12, "ctx": 32768,
      "rol": "generalista"},
+
+    # ---------- minimodelos generalistas (rapidísimos en CPU) ----------
+    {"tag": "smollm2:135m", "nombre": "SmolLM2 135M",
+     "peso": "ligero", "gb": 0.1, "ram_gb": 1, "ctx": 8192,
+     "rol": "minimodelo"},
+    {"tag": "smollm2:360m", "nombre": "SmolLM2 360M",
+     "peso": "ligero", "gb": 0.3, "ram_gb": 2, "ctx": 8192,
+     "rol": "minimodelo"},
+    {"tag": "smollm2:1.7b", "nombre": "SmolLM2 1.7B",
+     "peso": "ligero", "gb": 1.1, "ram_gb": 4, "ctx": 8192,
+     "rol": "minimodelo"},
+    {"tag": "tinyllama:1.1b", "nombre": "TinyLlama 1.1B",
+     "peso": "ligero", "gb": 0.7, "ram_gb": 3, "ctx": 2048,
+     "rol": "minimodelo"},
+    {"tag": "qwen2.5:0.5b", "nombre": "Qwen2.5 0.5B",
+     "peso": "ligero", "gb": 0.4, "ram_gb": 2, "ctx": 32768,
+     "rol": "minimodelo"},
+    {"tag": "falcon3:1b", "nombre": "Falcon 3 1B",
+     "peso": "ligero", "gb": 0.7, "ram_gb": 3, "ctx": 32768,
+     "rol": "minimodelo"},
+    {"tag": "falcon3:3b", "nombre": "Falcon 3 3B",
+     "peso": "ligero", "gb": 1.9, "ram_gb": 6, "ctx": 32768,
+     "rol": "minimodelo"},
+    {"tag": "orca-mini:3b", "nombre": "Orca Mini 3B",
+     "peso": "ligero", "gb": 1.9, "ram_gb": 6, "ctx": 2048,
+     "rol": "minimodelo"},
+
+    # ---------- salud / medicina (con peso: lentos en CPU) ----------
+    {"tag": "medllama2", "nombre": "MedLlama2 7B",
+     "peso": "medio", "gb": 3.8, "ram_gb": 10, "ctx": 4096,
+     "rol": "salud"},
+    {"tag": "meditron:7b", "nombre": "Meditron 7B",
+     "peso": "medio", "gb": 4.1, "ram_gb": 12, "ctx": 4096,
+     "rol": "salud"},
+    {"tag": "openbiollm:8b", "nombre": "OpenBioLLM 8B",
+     "peso": "medio", "gb": 4.9, "ram_gb": 12, "ctx": 8192,
+     "rol": "salud"},
+
+    # ---------- visión (describen imágenes) ----------
+    {"tag": "moondream", "nombre": "Moondream 1.8B",
+     "peso": "ligero", "gb": 1.7, "ram_gb": 5, "ctx": 2048,
+     "rol": "vision"},
 
     # ---------- medios (caben, pero lentos sin GPU) ----------
     {"tag": "codellama:7b-instruct", "nombre": "CodeLlama 7B Instruct",
@@ -75,3 +123,23 @@ PESOS = {
     "medio": {"num_ctx": 4096, "num_predict": 2048, "temperature": 0.7},
     "fuerte": {"num_ctx": 8192, "num_predict": 4096, "temperature": 0.8},
 }
+
+# orden de los grupos en el selector de modelos
+GRUPOS = ["Programación", "General", "Minimodelos", "Salud", "Visión"]
+
+
+def rol_de(tag):
+    """Propósito del modelo para agruparlo en el selector."""
+    import re
+    t = (tag or "").lower()
+    if re.search(r"coder|code|starcoder|codellama|codeqwen|granite|"
+                 r"opencoder|magicoder", t):
+        return "Programación"
+    if re.search(r"med|salud|bio|clinical|meditron", t):
+        return "Salud"
+    if re.search(r"moondream|llava|bakllava|vision", t):
+        return "Visión"
+    if re.search(r"0\.5b|135m|360m|1\.1b|[:\-]1b|1\.5b|1\.6b|1\.7b|"
+                 r"[:\-]2b|tiny|smollm|mini", t):
+        return "Minimodelos"
+    return "General"
