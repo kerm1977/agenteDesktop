@@ -162,7 +162,8 @@ class MainWindow(QMainWindow):
         self._last_text = ""
 
     def _save_model_sel(self, text):
-        if text and not text.startswith("("):
+        if text and (text == "(Automático)"
+                     or not text.startswith("(")):
             db.set_cfg("ultimo_modelo", text)
             self._precargar()   # el nuevo modelo entra en RAM de una vez
 
@@ -270,9 +271,10 @@ class MainWindow(QMainWindow):
         models = backends.list_models(backend)
         self.chat.cmb_model.blockSignals(True)
         self.chat.cmb_model.clear()
-        self.chat.cmb_model.addItems(models or ["(sin modelos)"])
+        self.chat.cmb_model.addItems(["(Automático)"]
+                                     + (models or ["(sin modelos)"]))
         self.chat.cmb_model.blockSignals(False)
-        if prev and prev in (models or []):
+        if prev and prev in (["(Automático)"] + (models or [])):
             self.chat.cmb_model.setCurrentText(prev)
         elif models:
             db.set_cfg("ultimo_modelo", models[0])
@@ -297,9 +299,12 @@ class MainWindow(QMainWindow):
         instalados = [self.chat.cmb_model.itemText(i)
                       for i in range(self.chat.cmb_model.count())
                       if not self.chat.cmb_model.itemText(i).startswith("(")]
-        if (db.get_cfg("dinamico", "1") != "1" or len(instalados) < 2
-                or not instalados):
+        auto = (actual.startswith("(")
+                or db.get_cfg("dinamico", "1") == "1")
+        if not auto or not instalados:
             return actual, None
+        if actual.startswith("(") and len(instalados) == 1:
+            return instalados[0], True
         t = text.lower()
         codigo = re.search(
             r"c[oó]digo|program|funci[oó]n|clase|bug|error|depura|html|css|"
