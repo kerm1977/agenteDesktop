@@ -12,10 +12,12 @@ BACKENDS = {
     "ollama": {"nombre": "Ollama", "url": OLLAMA_URL, "tipo": "ollama"},
     "lmstudio": {"nombre": "LM Studio", "url": os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234"), "tipo": "openai"},
     "llamacpp": {"nombre": "llama.cpp", "url": os.environ.get("LLAMACPP_URL", "http://127.0.0.1:8080"), "tipo": "openai"},
-    "openai": {"nombre": "API OpenAI", "url": os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"), "tipo": "openai", "key_env": "OPENAI_API_KEY"},
     "groq": {"nombre": "Groq (gratis)", "url": "https://api.groq.com/openai/v1", "tipo": "openai", "key_env": "GROQ_API_KEY"},
     "gemini": {"nombre": "Gemini (gratis)", "url": "https://generativelanguage.googleapis.com/v1beta/openai", "tipo": "openai", "key_env": "GEMINI_API_KEY"},
     "openrouter": {"nombre": "OpenRouter (gratis)", "url": "https://openrouter.ai/api/v1", "tipo": "openai", "key_env": "OPENROUTER_API_KEY"},
+    "github": {"nombre": "GitHub Models (gratis)", "url": "https://models.github.ai/inference", "tipo": "openai", "key_env": "GITHUB_TOKEN"},
+    "together": {"nombre": "Together AI (gratis)", "url": "https://api.together.xyz/v1", "tipo": "openai", "key_env": "TOGETHER_API_KEY"},
+    "cerebras": {"nombre": "Cerebras (gratis)", "url": "https://api.cerebras.ai/v1", "tipo": "openai", "key_env": "CEREBRAS_API_KEY"},
 }
 
 
@@ -29,10 +31,6 @@ def configure_backend(backend, key=None, base=None):
         os.environ[cfg["key_env"]] = key
     if base:
         cfg["url"] = base.rstrip("/")
-
-
-def configure_openai(key=None, base=None):
-    configure_backend("openai", key, base)
 
 
 def _http_json(url, payload=None, timeout=8, key_env=None):

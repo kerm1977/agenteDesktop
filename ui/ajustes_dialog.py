@@ -98,15 +98,13 @@ class AjustesDialog(QDialog):
             {"resumida": 0, "media": 1, "explicativa": 2}.get(nivel, 1))
         form.addRow("Detalle de respuesta:", self._detalle)
 
-        self._api_base = QLineEdit(
-            db.get_cfg("openai_base", "https://api.openai.com/v1"))
-        form.addRow("API base (OpenAI):", self._api_base)
+        form.addRow(QLabel("API keys de motores gratuitos:"))
         self._api_keys = {}
-        for b, hint in (("openai", "sk-..."), ("groq", "gsk_..."),
-                        ("gemini", "AIza..."), ("openrouter", "sk-or-...")):
-            w = QLineEdit(db.get_cfg("apikey:" + b) or
-                          (db.get_cfg("openai_key") if b == "openai"
-                           else ""))
+        for b, hint in (("groq", "gsk_..."), ("gemini", "AIza..."),
+                        ("openrouter", "sk-or-..."),
+                        ("github", "github_pat_..."),
+                        ("together", "..."), ("cerebras", "csk-...")):
+            w = QLineEdit(db.get_cfg("apikey:" + b) or "")
             w.setEchoMode(QLineEdit.Password)
             w.setPlaceholderText(hint)
             form.addRow(f"API key {b}:", w)
@@ -221,11 +219,8 @@ class AjustesDialog(QDialog):
         db.set_cfg("detalle:" + self._model,
                    ("resumida", "media", "explicativa")[
                        self._detalle.currentIndex()])
-        db.set_cfg("openai_base", self._api_base.text().strip())
         for b, w in self._api_keys.items():
             k = w.text().strip()
             db.set_cfg("apikey:" + b, k)
-            backends.configure_backend(
-                b, k,
-                self._api_base.text().strip() if b == "openai" else None)
+            backends.configure_backend(b, k)
         self.accept()

@@ -319,12 +319,9 @@ class MainWindow(QMainWindow):
         env_name = cfg.get("key_env")
         if not env_name or os.environ.get(env_name):
             return
-        key = db.get_cfg("apikey:" + backend) or (
-            db.get_cfg("openai_key") if backend == "openai" else None)
+        key = db.get_cfg("apikey:" + backend)
         if key:
-            base = db.get_cfg("openai_base") if backend == "openai" \
-                else None
-            backends.configure_backend(backend, key, base)
+            backends.configure_backend(backend, key)
 
     def _restaurar_root(self):
         """Al arrancar vuelve al último proyecto trabajado."""
