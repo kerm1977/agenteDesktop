@@ -1,5 +1,5 @@
 {
- "version": "0.5.8",
+ "version": "0.5.9",
  "files": {
   ".gitignore": "4f6ad4d1f3d6d41a7a4fe4f8b336f9581156e6506c262154abde816faeab6005",
   "app.py": "c67ddceba1c9bba1b6e7f06c9c1c8866a73247ab8106ec93c7fa74b7ee0b708c",
@@ -7,7 +7,7 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "8728f56a285910a461cfd3a17d03b9045f3b4fa695b35348108db21f067b9c57",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "9bf3507a12c8ced55daae843f9ee4e4f8c09d0ec1cf74dcbbc97840173ef1fdd",
+  "version.json": "95646e92bb7dc39106a28975af34ed8993bc6d5de636c0ac3bb206bcad04dfdf",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "32608a06cadc3a6e014b6e1f75cc6a818f3d7a7139fc553b3d6d82c6042968ee",
   "core/bench.py": "45e590ab0e46a976a48b4f6bf5f6bbbee1e0a5ed5d42853351190edd04b1d72a",
@@ -30,12 +30,12 @@
   "ui/editor_panel.py": "e6c9ae71dfd57c530e976b10fd1567ce995bdbcd0ec344063254b7369e5e569f",
   "ui/equipo_dialog.py": "dd9d9531b8407f75be5de8e069ec3278862a86d390c4be88b9d5fa7b2d2b994e",
   "ui/iconos.py": "bdb898271585a0d792330f604df251035455b0f4225f49aaf295f28c03f2053c",
-  "ui/main_window.py": "7dc1cf66b1c2d6b2f540849e23135677402d679b099b9222f2bc6a45767a9c16",
+  "ui/main_window.py": "fc9f9276c7ef0be902a8f1a5dd0a7beb6dbfa8fbe62761d3630b1f79a974ff9e",
   "ui/models_panel.py": "38433e9d65b2fa9d0ceae86991a595e5a76f444f925dadb4669fa9ea78df0525",
   "ui/nuevo_proyecto.py": "ab307800e57d599e405567dd9421c1ce5c70515afb1f965a494cac26da17f2b8",
   "ui/ota_ui.py": "aaad26ade2915be2ee33299183d37775120412df0f0809da11916d963663d658",
   "ui/tree_panel.py": "eec1d959cf9001e7f950f108ff3e1f2dd6d933736c56d9dedf91af66e3b734af",
-  "ui/worker.py": "b430969463041afe899a06719c2c0c8372bcc329f7e909372ace9c5927fcdee7",
+  "ui/worker.py": "f5ec793fd951a7dd31a31b570ac91c0aa37b5365445f92f06300e6b7004e9afa",
   "ui/__init__.py": "f745e33402ff264da36f04edc4da8d24bff6ee974598316b71cf0042cb4686cd"
  }
 }

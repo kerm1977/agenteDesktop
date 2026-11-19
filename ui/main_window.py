@@ -512,8 +512,21 @@ class MainWindow(QMainWindow):
             "num_thread", os.cpu_count() or 4))
         self.chat.start_stream()
         self.chat.set_busy(True)
+        # el intérprete (modelo más rápido) traduce la intención primero
+        interprete = None
+        if db.get_cfg("interprete", "1") == "1":
+            candidatos = [self.chat.cmb_model.itemText(i)
+                          for i in range(self.chat.cmb_model.count())
+                          if not self.chat.cmb_model.itemText(i)
+                          .startswith("(") and
+                          self.chat.cmb_model.itemText(i) != model]
+            if candidatos:
+                def _vel(m):
+                    b = db.get_bench(m)
+                    return b[1] if b and b[1] else 99999
+                interprete = min(candidatos, key=_vel)
         self._worker = ChatWorker(backend, model, self._messages, self._root,
-                                  options=options)
+                                  options=options, interpreter=interprete)
         self._worker.token.connect(self.chat.append_token)
         self._worker.card.connect(self.chat.add_card)
         self._worker.finished_text.connect(self._chat_done)

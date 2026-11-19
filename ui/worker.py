@@ -31,13 +31,15 @@ class ChatWorker(QThread):
     perf = Signal(float, int)   # segundos, tokens
     open_dir = Signal(str)      # carpeta a abrir como raíz
 
-    def __init__(self, backend, model, messages, root, options=None):
+    def __init__(self, backend, model, messages, root, options=None,
+                 interpreter=None):
         super().__init__()
         self._backend = backend
         self._model = model
         self._messages = list(messages)
         self._root = root
         self._options = options or {}
+        self._interpreter = interpreter
         self._stop = False
         self._rounds_max = 8
 
@@ -47,10 +49,39 @@ class ChatWorker(QThread):
 
     def run(self):
         try:
+            self._interpretar()
             self._loop()
         except Exception as e:
             consola.log_error("worker", repr(e))
             self.failed.emit(str(e))
+
+    def _interpretar(self):
+        """El modelo intérprete traduce la petición a una orden clara."""
+        if not self._interpreter or self._interpreter == self._model:
+            return
+        ultimo = next((m for m in reversed(self._messages)
+                       if m["role"] == "user"), None)
+        if not ultimo or not ultimo["content"].strip():
+            return
+        prompt = [{"role": "system", "content":
+                   "Reescribe la petición del usuario como una orden clara "
+                   "y técnica en español, máximo 2 líneas. Si ya es clara, "
+                   "repítela igual. NO la respondas."},
+                  {"role": "user", "content": ultimo["content"]}]
+        try:
+            texto = "".join(
+                c.get("message", {}).get("content", "")
+                for c in backends.chat_stream(
+                    self._backend, self._interpreter, prompt,
+                    {"num_predict": 90, "num_ctx": 2048}))
+            texto = texto.strip()
+        except Exception as e:
+            consola.log_error("interprete", repr(e))
+            return
+        if texto:
+            consola.log_info("interprete", texto[:120])
+            self.card.emit("Intérprete → " + self._interpreter, texto)
+            ultimo["content"] += "\n\n(Intención interpretada: " + texto + ")"
 
     def _loop(self):
         full_reply = ""
