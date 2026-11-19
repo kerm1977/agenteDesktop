@@ -1,5 +1,5 @@
 {
- "version": "0.9.2",
+ "version": "0.9.3",
  "files": {
   ".gitignore": "b0fdf203d6dc12386e3ca27071b4e44afef2902f3be0cbdd215f33dd2d27bb1b",
   "analizar_modelos.py": "0b6778b1ef7285292976776e00bd3b5785b9cbef795de03d99b636b8143e2c99",
@@ -14,7 +14,7 @@
   "REGLAS.md": "c19b91f7fe9325df7df07fa02abe3c013ca0765c614552a2918a5723a3a5465a",
   "requirements.txt": "8728f56a285910a461cfd3a17d03b9045f3b4fa695b35348108db21f067b9c57",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "83269ed15b2037577069a722830de2a08f18836f03bd82e161717eae8c1c2a20",
+  "version.json": "a9aa6f3a663e638aa1606dd05f38f0ce2c8656000bd5e7e5f4a3661b87dacaec",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "f03857de863900a635de697fef280c4556aa81393a10caf9a43a000a259c18a8",
   "core/bench.py": "45e590ab0e46a976a48b4f6bf5f6bbbee1e0a5ed5d42853351190edd04b1d72a",
@@ -42,10 +42,11 @@
   "ui/editor_panel.py": "0cd6e672e14f4132ba995a064203ffce68b6fda42eb10c22a97e1570115bdd30",
   "ui/equipo_dialog.py": "457589fa6bce5f0661854042330a5f8331fb0e6386159bca9c6a602847ce40b6",
   "ui/iconos.py": "bdb898271585a0d792330f604df251035455b0f4225f49aaf295f28c03f2053c",
-  "ui/main_window.py": "79804adf5640dcccba8147170dfa1260f8da966e70d1a3f3d3e11be64bdea631",
+  "ui/main_window.py": "e1947912bb34702a9aa0915862501af3eaa15f10d3328927cebee1d5ebecd20e",
   "ui/models_panel.py": "38433e9d65b2fa9d0ceae86991a595e5a76f444f925dadb4669fa9ea78df0525",
   "ui/nuevo_proyecto.py": "ab307800e57d599e405567dd9421c1ce5c70515afb1f965a494cac26da17f2b8",
   "ui/ota_ui.py": "aaad26ade2915be2ee33299183d37775120412df0f0809da11916d963663d658",
+  "ui/proyectos_panel.py": "f34594e7a2004f53f6915ad12b55cd735ea4c630653266fbc9f25ced0b29df48",
   "ui/tree_panel.py": "eec1d959cf9001e7f950f108ff3e1f2dd6d933736c56d9dedf91af66e3b734af",
   "ui/worker.py": "224639897f76d9c113400d41ba27614a7d897dd7315900b4f8a24cdcdbe8ffb6",
   "ui/__init__.py": "f745e33402ff264da36f04edc4da8d24bff6ee974598316b71cf0042cb4686cd"

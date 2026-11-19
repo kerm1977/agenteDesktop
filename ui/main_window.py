@@ -18,6 +18,7 @@ from ui.conversaciones import ConversacionesPanel
 from ui.equipo_dialog import EquipoDialog
 from ui.models_panel import ModelsPanel
 from ui.nuevo_proyecto import NuevoProyectoDialog, crear_proyecto
+from ui.proyectos_panel import ProyectosPanel
 from ui.tree_panel import TreePanel
 from ui.worker import ChatWorker, ScanWorker
 
@@ -59,14 +60,14 @@ class MainWindow(QMainWindow):
         self._data_dir = os.path.join(os.path.expanduser("~"),
                                       "Downloads", "agente-desktop")
 
-        self.tree = TreePanel()
+        self.proyectos = ProyectosPanel()
         self.models = ModelsPanel()
         self.editor = EditorPanel()
         self.chat = ChatPanel()
         self.proyecto_tree = TreePanel()  # árbol del proyecto, junto al IDE
 
         self._stack = QStackedWidget()
-        self._stack.addWidget(self.tree)
+        self._stack.addWidget(self.proyectos)
         self._stack.addWidget(self.models)
         self._stack.setMinimumWidth(220)
         self._stack.setMaximumWidth(360)
@@ -227,7 +228,7 @@ class MainWindow(QMainWindow):
         self._load_models()
 
     def _wire(self):
-        self.tree.file_opened.connect(self.editor.open_file)
+        self.proyectos.abrir.connect(self.set_root)
         self.proyecto_tree.file_opened.connect(self.editor.open_file)
         self.editor.file_saved.connect(
             lambda p: (consola.log_info("editor", "guardado " + p),
@@ -279,7 +280,7 @@ class MainWindow(QMainWindow):
         db.set_cfg("historial_roots", _j.dumps(hist[:12],
                                                ensure_ascii=False))
         db.set_cfg("ultimo_root", root)
-        self.tree.set_root(root)
+        self.proyectos.refresh()
         self.proyecto_tree.set_root(root)
         self.editor.set_root(root)
         memoria.invalidate(root)
@@ -345,7 +346,7 @@ class MainWindow(QMainWindow):
         memoria.invalidate(self._root)
         if ultimo:
             self._stack.setCurrentIndex(0)
-            self.tree.reveal(ultimo)
+            self.proyectos.refresh()
             if os.path.isdir(ultimo):
                 self.proyecto_tree.set_root(ultimo)
                 self.editor.set_root(ultimo)
