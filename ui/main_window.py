@@ -556,16 +556,23 @@ class MainWindow(QMainWindow):
             "num_thread", os.cpu_count() or 4))
         self.chat.start_stream()
         self.chat.set_busy(True)
-        # el intérprete (modelo más rápido) traduce la intención primero
+        # el intérprete (modelo más rápido MEDIDO) traduce la intención
         interprete = None
-        if db.get_cfg("interprete", "1") == "1":
+        # mensajes cortos y claros no necesitan traducción: se ahorra tiempo
+        if (db.get_cfg("interprete", "1") == "1"
+                and len(text.strip()) >= 40):
             candidatos = [self.chat.cmb_model.itemText(i)
                           for i in range(self.chat.cmb_model.count())
                           if not self.chat.cmb_model.itemText(i)
                           .startswith("(") and
                           self.chat.cmb_model.itemText(i) != model]
             if candidatos:
+                from core import perfil as _perfil
+                p = _perfil.cargar()
                 def _vel(m):
+                    g = p.get(m, {}).get("general_ms")
+                    if g:
+                        return g
                     b = db.get_bench(m)
                     return b[1] if b and b[1] else 99999
                 interprete = min(candidatos, key=_vel)
