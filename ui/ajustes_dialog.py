@@ -77,7 +77,7 @@ class AjustesDialog(QDialog):
         self._threads = QSpinBox()
         self._threads.setRange(1, cpu)
         self._threads.setValue(
-            int(db.get_cfg("num_thread", cpu)))
+            int(db.get_cfg("num_thread", max(1, cpu // 2))))
         self._threads.setToolTip(f"Tu CPU tiene {cpu} hilos disponibles")
         form.addRow(f"Hilos de CPU (1–{cpu}):", self._threads)
 

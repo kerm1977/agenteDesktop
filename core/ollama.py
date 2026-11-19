@@ -36,6 +36,15 @@ def ensure_running(timeout=15):
     try:
         env = dict(os.environ)
         env["OLLAMA_MODELS"] = env.get("OLLAMA_MODELS", MODELS_DIR)
+        # velocidad: atención flash y caché KV cuantizada (menos RAM)
+        try:
+            from core import db as _db
+            if _db.get_cfg("flash_attn", "1") == "1":
+                env["OLLAMA_FLASH_ATTENTION"] = "1"
+            env["OLLAMA_KV_CACHE_TYPE"] = _db.get_cfg("kv_cache", "q8_0")
+        except Exception:
+            env.setdefault("OLLAMA_FLASH_ATTENTION", "1")
+            env.setdefault("OLLAMA_KV_CACHE_TYPE", "q8_0")
         subprocess.Popen([_ollama_exe(), "serve"], env=env,
                          stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))

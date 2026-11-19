@@ -690,8 +690,9 @@ class MainWindow(QMainWindow):
             cur = options.get("num_predict")
             if cur is None or int(cur) <= 0 or int(cur) > caps[nivel]:
                 options["num_predict"] = caps[nivel]
+        # por defecto núcleos físicos (sin hyperthreading) = más rápido
         options["num_thread"] = int(db.get_cfg(
-            "num_thread", os.cpu_count() or 4))
+            "num_thread", max(1, (os.cpu_count() or 4) // 2)))
         options["num_gpu"] = int(db.get_cfg("num_gpu", 0))
         # caché: la misma pregunta+modelo+detalle responde al instante
         ck = "|".join((model, nivel,
