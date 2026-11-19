@@ -179,6 +179,20 @@ class MainWindow(QMainWindow):
     # ---------- proyecto ----------
     def set_root(self, root):
         self._root = root
+        # historial persistente de proyectos (último siempre en [0])
+        try:
+            import json as _j
+            hist = _j.loads(db.get_cfg("historial_roots", "[]"))
+        except Exception:
+            hist = []
+        hist = [h for h in hist if h.get("path") != root]
+        hist.insert(0, {"id": (hist[0]["id"] + 1) if hist else 1,
+                        "path": root,
+                        "nombre": os.path.basename(
+                            root.rstrip("\\/")) or root})
+        db.set_cfg("historial_roots", _j.dumps(hist[:12],
+                                               ensure_ascii=False))
+        db.set_cfg("ultimo_root", root)
         self.tree.set_root(root)
         self.proyecto_tree.set_root(root)
         self.editor.set_root(root)
@@ -295,6 +309,18 @@ class MainWindow(QMainWindow):
         elif models:
             db.set_cfg("ultimo_modelo", models[0])
             self.chat.cmb_model.setCurrentText(models[0])
+        self._restaurar_root()
+
+    def _restaurar_root(self):
+        """Al arrancar vuelve al último proyecto trabajado."""
+        if getattr(self, "_root_restaurado", False):
+            return
+        self._root_restaurado = True
+        ult = db.get_cfg("ultimo_root")
+        if ult and os.path.isdir(ult) and ult != self._root:
+            self.set_root(ult)
+            self.chat.add_system(
+                "Proyecto restaurado: " + ult)
         self._precargar()
 
     def _precargar(self):
@@ -502,8 +528,10 @@ class MainWindow(QMainWindow):
                                   "content": ""},
                                  f"Archivo creado: {nombre}")
             dest = os.path.join(self._donde(t), nombre)
-            return self._run(text, "create_dir", {"path": dest},
-                             f"Carpeta creada: {dest}")
+            tools.run_tool("create_dir", {"path": dest}, self._root)
+            return self._ejecutar(
+                text, "create_dir", "@OPEN:" + dest,
+                f"Carpeta creada: {dest} (abierta en el editor)")
         if borrar and cosa:
             nombre = self._nombre(text)
             if nombre:
