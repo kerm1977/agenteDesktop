@@ -1,5 +1,5 @@
 {
- "version": "0.8.1",
+ "version": "0.8.2",
  "files": {
   ".gitignore": "31f69bf0ed503448fdde05a5750a9ff8235071a9125156a1ee9a7b3a5008107f",
   "analizar_modelos.py": "0b6778b1ef7285292976776e00bd3b5785b9cbef795de03d99b636b8143e2c99",
@@ -12,7 +12,7 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "8728f56a285910a461cfd3a17d03b9045f3b4fa695b35348108db21f067b9c57",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "f78c21a564813493e54dded2ad66c9c485962ba0fcbae19176db8ff20a0b4207",
+  "version.json": "c442a7435343671644457d22c27a1d4e3160d1585fbab3ce83141e5a6dc4fb58",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "f03857de863900a635de697fef280c4556aa81393a10caf9a43a000a259c18a8",
   "core/bench.py": "45e590ab0e46a976a48b4f6bf5f6bbbee1e0a5ed5d42853351190edd04b1d72a",
@@ -30,7 +30,7 @@
   "core/updater.py": "99269edb98de85aab626415d3af868213149f353a11a74d8b491508888b48478",
   "core/voz.py": "becdc853c7eedf5c60bab821890a9d54ac9549746a85fb079e43c31a3e75f097",
   "core/__init__.py": "43e1ecfd357e54391a7755088e876aced42c99bafcd2e2157ae9c8525dc1e5f7",
-  "ui/ajustes_dialog.py": "f7dcc96cc18cef06d108fe953afe86435ba1b6ea7c86d548d937037521794841",
+  "ui/ajustes_dialog.py": "cab57cd0ccea6d8f9e3d890cedfb7d108caa2105456cc475bfaf2f4d238f9567",
   "ui/barras.py": "55a136c3668f3605bc316d6e0b7979b1c6466d4a200965f0033f44a0cd43ffff",
   "ui/chat_panel.py": "34e77993fc1eeca1cf8d4fd09f8292882fee0ebf3b0beeee3aef895c46f472d7",
   "ui/console_panel.py": "941bcd9e0d5990cfa0e8004ba5a92e3962adc2b66c522252bba15a02a555a060",

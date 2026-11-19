@@ -98,6 +98,24 @@ class AjustesDialog(QDialog):
             {"resumida": 0, "media": 1, "explicativa": 2}.get(nivel, 1))
         form.addRow("Detalle de respuesta:", self._detalle)
 
+        enlaces = QLabel(
+            "API keys gratis — regístrate y copia tu clave:<br>"
+            "· Groq: <a href='https://console.groq.com/keys'>"
+            "console.groq.com/keys</a><br>"
+            "· Gemini: <a href='https://aistudio.google.com/app/apikey'>"
+            "aistudio.google.com/app/apikey</a><br>"
+            "· OpenRouter: <a href='https://openrouter.ai/keys'>"
+            "openrouter.ai/keys</a><br>"
+            "· GitHub Models: <a href='https://github.com/settings/tokens'>"
+            "github.com/settings/tokens</a> (token clásico)<br>"
+            "· Together: <a href='https://api.together.xyz/settings/api-keys'>"
+            "api.together.xyz/settings/api-keys</a><br>"
+            "· Cerebras: <a href='https://cloud.cerebras.ai/'>"
+            "cloud.cerebras.ai</a>")
+        enlaces.setOpenExternalLinks(True)
+        enlaces.setWordWrap(True)
+        enlaces.setStyleSheet("color:#8ab4f8;padding:4px 0;")
+        form.addRow(enlaces)
         form.addRow(QLabel("API keys de motores gratuitos:"))
         self._api_keys = {}
         for b, hint in (("groq", "gsk_..."), ("gemini", "AIza..."),
