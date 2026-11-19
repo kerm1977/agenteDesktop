@@ -30,6 +30,8 @@ def init():
             model TEXT PRIMARY KEY, ok INTEGER, ms INTEGER, ts REAL)""")
         con.execute("""CREATE TABLE IF NOT EXISTS config(
             k TEXT PRIMARY KEY, v TEXT)""")
+        con.execute("""CREATE TABLE IF NOT EXISTS cache_resp(
+            k TEXT PRIMARY KEY, respuesta TEXT, ts REAL)""")
 
 
 # ---------- configuración persistente ----------
@@ -104,6 +106,24 @@ def chat_history():
         rows = con.execute(
             "SELECT role, content FROM chat_log ORDER BY id").fetchall()
     return [(r["role"], r["content"]) for r in rows]
+
+
+# ---------- caché de respuestas frecuentes ----------
+def get_cached(k):
+    with _conn() as con:
+        row = con.execute(
+            "SELECT respuesta FROM cache_resp WHERE k=?", (k,)
+            ).fetchone()
+    return row["respuesta"] if row else None
+
+
+def set_cached(k, respuesta, max_items=200):
+    with _conn() as con:
+        con.execute("INSERT OR REPLACE INTO cache_resp(k,respuesta,ts) "
+                    "VALUES(?,?,?)", (k, respuesta, time.time()))
+        con.execute("DELETE FROM cache_resp WHERE k NOT IN "
+                    "(SELECT k FROM cache_resp ORDER BY ts DESC LIMIT ?)",
+                    (max_items,))
 
 
 init()

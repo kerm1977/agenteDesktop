@@ -81,6 +81,13 @@ class AjustesDialog(QDialog):
         self._threads.setToolTip(f"Tu CPU tiene {cpu} hilos disponibles")
         form.addRow(f"Hilos de CPU (1–{cpu}):", self._threads)
 
+        self._gpu = QSpinBox()
+        self._gpu.setRange(0, 200)
+        self._gpu.setValue(int(db.get_cfg("num_gpu", 0)))
+        self._gpu.setToolTip("Capas del modelo en VRAM (0 = solo CPU/RAM; "
+                             "Ollama reparte el resto en RAM)")
+        form.addRow("Capas en GPU:", self._gpu)
+
         self._detalle = QComboBox()
         self._detalle.addItems(["Resumida (corta)", "Media (normal)",
                                 "Explicativa (con detalle)"])
@@ -205,6 +212,7 @@ class AjustesDialog(QDialog):
                            self._ctx.value(), self._pred.value(),
                            p.get("temperature", 0.7))
         db.set_cfg("num_thread", self._threads.value())
+        db.set_cfg("num_gpu", self._gpu.value())
         db.set_cfg("auto_tune", "1" if self._auto.isChecked() else "0")
         db.set_cfg("dinamico", "1" if self._dinamico.isChecked() else "0")
         db.set_cfg("detalle:" + self._model,

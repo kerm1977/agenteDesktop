@@ -692,6 +692,17 @@ class MainWindow(QMainWindow):
                 options["num_predict"] = caps[nivel]
         options["num_thread"] = int(db.get_cfg(
             "num_thread", os.cpu_count() or 4))
+        options["num_gpu"] = int(db.get_cfg("num_gpu", 0))
+        # caché: la misma pregunta+modelo+detalle responde al instante
+        ck = "|".join((model, nivel,
+                       re.sub(r"\s+", " ", text.strip().lower())))
+        hit = db.get_cached(ck)
+        if hit:
+            self.chat.start_stream()
+            self.chat.append_token(hit)
+            self.chat.add_rule("⚡ caché — respuesta instantánea")
+            self._chat_done(hit)
+            return
         self.chat.start_stream()
         self.chat.set_busy(True)
         # el intérprete (modelo más rápido MEDIDO) traduce la intención
@@ -719,7 +730,8 @@ class MainWindow(QMainWindow):
                                   corte=(nivel == "resumida"))
         self._worker.token.connect(self.chat.append_token)
         self._worker.card.connect(self.chat.add_card)
-        self._worker.finished_text.connect(self._chat_done)
+        self._worker.finished_text.connect(
+            lambda t, k=ck: (db.set_cached(k, t), self._chat_done(t)))
         self._worker.failed.connect(self._chat_failed)
         self._worker.stat.connect(self.chat.add_rule)
         self._worker.perf.connect(lambda dt, ntok, m=model:
