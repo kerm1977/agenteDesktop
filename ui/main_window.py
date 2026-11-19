@@ -590,6 +590,14 @@ class MainWindow(QMainWindow):
         t = " " + text.lower().strip() + " "
         if "sabes" in t or "puedes " in t and "crea" not in t:
             return False
+        # autoevolución: "mejora la app/tu interfaz" -> el agente se edita
+        if re.search(r"mejora|autoevoluci|modifica tu|tu propio c[oó]digo|"
+                     r"tu interfaz|la app misma|mej[oó]rate", t):
+            self._root = APP_DIR
+            self._self_mode = True
+            self.chat.add_system(
+                "Autoevolución: trabajando sobre mi propio código.")
+            return False
         from core import ordenes
         ints = ordenes.intenciones(t)
         crear = "crear" in ints
