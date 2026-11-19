@@ -418,9 +418,21 @@ class MainWindow(QMainWindow):
             text, re.I)
         if m:
             return m.group(1).strip().strip('"\'')
-        m = re.search(r"(?:carpeta|directorio|archivo)\s+([\w\-. ]+?)"
-                      r"(?:\s+en\s|\s*$|[.,])", text, re.I)
-        return m.group(1).strip().strip('"\'') if m else None
+        m = re.search(r"(?:llamad[ao]s?|se llame|nombre)\s+"
+                      r"([\w\-. ]+?)(?:\s+(?:en|y|con|que|para)\s|[.,]|$)",
+                      text, re.I)
+        if not m:
+            m = re.search(r"(?:carpeta|directorio|archivo)\s+([\w\-. ]+?)"
+                          r"(?:\s+en\s|[.,]|$)", text, re.I)
+        if not m:
+            return None
+        nom = m.group(1).strip().strip('"\'')
+        # corta el nombre en el primer verbo/palabra de acción incrustada
+        nom = re.split(
+            r"\b(?:tienes|tiene|puedes|puedo|quiero|necesito|queremos|"
+            r"utilizando|usando|mediante|capacidad|debes|debe)\b",
+            nom)[0].strip()
+        return nom or None
 
     def _crear_web(self, text):
         """Genera una página web de verdad: carpeta + index.html con CDN."""
@@ -492,13 +504,27 @@ class MainWindow(QMainWindow):
         # "elimina/borra X" tiene prioridad sobre cualquier "crear"
         # mencionado en la frase ("lo que acabas de crear…")
         if borrar:
+            # "elimina el último proyecto" -> resuelto por el historial
+            if re.search(r"[úu]ltim[ao]\w*\s+(proyecto|carpeta|p[aá]gina|"
+                         r"web|trabajo|directorio)", t):
+                try:
+                    import json as _j
+                    hist = _j.loads(db.get_cfg("historial_roots", "[]"))
+                except Exception:
+                    hist = []
+                dest = (hist[0]["path"] if hist
+                        else db.get_cfg("ultimo_root", ""))
+                if dest:
+                    return self._run(text, "delete_path", {"path": dest},
+                                     "Eliminado último proyecto: " + dest)
+                return False
             t2 = re.sub(r"gui[oó]n( medio)?", "-", t)
             m = re.search(
                 r"([a-z]:\\[^\s\"*]+|"           # ruta absoluta
                 r"\"([^\"]+)\"|'([^']+)'|"      # entre comillas
                 r"([\w\-]+\.[a-z]{2,5})|"       # archivo.ext
                 r"([\w]+\-[\w\-]+)|"            # nombre-con-guion
-                r"(?:carpeta|p[aá]gina|web|sitio|directorio)\s+"
+                r"(?:carpeta|p[aá]gina|web|sitio|directorio|proyecto)\s+"
                 r"(?:llamad[ao]|nombrad[ao])?\s*([\w\-]+))",
                 t2, re.I)
             nom = next((g for g in m.groups() if g), "").strip() if m else ""
@@ -510,7 +536,8 @@ class MainWindow(QMainWindow):
             return False   # borrar sin nombre claro -> que pregunte el modelo
         # "crea una página/sitio/index.html" -> plantilla real al instante
         if crear and re.search(
-                r"single.?page|p[aá]gina|index|sitio|web ?app|web|html", t):
+                r"single.?page|simple.?page|p[aá]gina|index|sitio|"
+                r"web ?app|web|html", t):
             return self._crear_web(text)
         # "crea una app/juego/programa" genérico -> lo intenta el modelo
         if re.search(r"app|aplicaci|juego|programa|script|c[oó]digo|"
