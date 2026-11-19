@@ -274,6 +274,17 @@ class MainWindow(QMainWindow):
         self.chat.cmb_model.addItems(["(Automático)"]
                                      + (models or ["(sin modelos)"]))
         self.chat.cmb_model.blockSignals(False)
+        # auto-análisis: cualquier modelo nuevo se mide en 2.º plano
+        try:
+            from core import perfil
+            falta = perfil.faltantes(models or [])
+            if falta:
+                consola.log_info("perfil", "midiendo: " + ", ".join(falta))
+                threading.Thread(
+                    target=perfil.analizar, args=(falta,),
+                    daemon=True).start()
+        except Exception as e:
+            consola.log_error("perfil", repr(e))
         if prev and prev in (["(Automático)"] + (models or [])):
             self.chat.cmb_model.setCurrentText(prev)
         elif models:
