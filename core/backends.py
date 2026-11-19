@@ -16,6 +16,15 @@ BACKENDS = {
 }
 
 
+def configure_openai(key=None, base=None):
+    """Configura clave/URL de una API compatible OpenAI (OpenAI, Groq,
+    OpenRouter, LM Studio remoto...). Persiste solo en memoria/env."""
+    if key is not None:
+        os.environ["OPENAI_API_KEY"] = key
+    if base:
+        BACKENDS["openai"]["url"] = base.rstrip("/")
+
+
 def _http_json(url, payload=None, timeout=8):
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})

@@ -4,8 +4,9 @@ import re
 import shutil
 
 from PySide6.QtCore import Qt, QTimer
-from PySide6.QtWidgets import (QDockWidget, QFileDialog, QMainWindow,
-                               QMessageBox, QSplitter, QStackedWidget)
+from PySide6.QtWidgets import (QDockWidget, QFileDialog, QInputDialog,
+                               QLineEdit, QMainWindow, QMessageBox,
+                               QSplitter, QStackedWidget)
 
 from core import backends, consola, db, memoria, ollama, prompts, tools
 from ui import barras, ota_ui
@@ -286,6 +287,8 @@ class MainWindow(QMainWindow):
         backend = self.chat.cmb_backend.currentData()
         if backend:
             db.set_cfg("ultimo_backend", backend)
+        if backend == "openai":
+            self._config_openai()
         prev = db.get_cfg("ultimo_modelo")
         models = backends.list_models(backend)
         self.chat.cmb_model.blockSignals(True)
@@ -310,6 +313,29 @@ class MainWindow(QMainWindow):
             db.set_cfg("ultimo_modelo", models[0])
             self.chat.cmb_model.setCurrentText(models[0])
         self._restaurar_root()
+
+    def _config_openai(self):
+        """Pide/guarda la clave y URL de la API compatible OpenAI."""
+        if os.environ.get("OPENAI_API_KEY"):
+            return
+        key = db.get_cfg("openai_key")
+        if key:
+            backends.configure_openai(key, db.get_cfg("openai_base"))
+            return
+        base, ok = QInputDialog.getText(
+            self, "API OpenAI",
+            "URL base (OpenAI, Groq u OpenRouter):",
+            text="https://api.openai.com/v1")
+        if not ok:
+            return
+        key, ok = QInputDialog.getText(
+            self, "API OpenAI", "API key:", QLineEdit.Password)
+        if not ok or not key.strip():
+            return
+        db.set_cfg("openai_base", base.strip())
+        db.set_cfg("openai_key", key.strip())
+        backends.configure_openai(key.strip(), base.strip())
+        self.chat.add_system("API OpenAI configurada.")
 
     def _restaurar_root(self):
         """Al arrancar vuelve al último proyecto trabajado."""
