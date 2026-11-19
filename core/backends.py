@@ -12,24 +12,34 @@ BACKENDS = {
     "ollama": {"nombre": "Ollama", "url": OLLAMA_URL, "tipo": "ollama"},
     "lmstudio": {"nombre": "LM Studio", "url": os.environ.get("LMSTUDIO_URL", "http://127.0.0.1:1234"), "tipo": "openai"},
     "llamacpp": {"nombre": "llama.cpp", "url": os.environ.get("LLAMACPP_URL", "http://127.0.0.1:8080"), "tipo": "openai"},
-    "openai": {"nombre": "API OpenAI", "url": os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"), "tipo": "openai"},
+    "openai": {"nombre": "API OpenAI", "url": os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"), "tipo": "openai", "key_env": "OPENAI_API_KEY"},
+    "groq": {"nombre": "Groq (gratis)", "url": "https://api.groq.com/openai/v1", "tipo": "openai", "key_env": "GROQ_API_KEY"},
+    "gemini": {"nombre": "Gemini (gratis)", "url": "https://generativelanguage.googleapis.com/v1beta/openai", "tipo": "openai", "key_env": "GEMINI_API_KEY"},
+    "openrouter": {"nombre": "OpenRouter (gratis)", "url": "https://openrouter.ai/api/v1", "tipo": "openai", "key_env": "OPENROUTER_API_KEY"},
 }
 
 
-def configure_openai(key=None, base=None):
-    """Configura clave/URL de una API compatible OpenAI (OpenAI, Groq,
-    OpenRouter, LM Studio remoto...). Persiste solo en memoria/env."""
-    if key is not None:
-        os.environ["OPENAI_API_KEY"] = key
+def configure_backend(backend, key=None, base=None):
+    """Configura clave/URL de un motor tipo openai (OpenAI, Groq,
+    Gemini, OpenRouter...). Persiste solo en memoria/env."""
+    cfg = BACKENDS.get(backend)
+    if not cfg:
+        return
+    if key and cfg.get("key_env"):
+        os.environ[cfg["key_env"]] = key
     if base:
-        BACKENDS["openai"]["url"] = base.rstrip("/")
+        cfg["url"] = base.rstrip("/")
 
 
-def _http_json(url, payload=None, timeout=8):
+def configure_openai(key=None, base=None):
+    configure_backend("openai", key, base)
+
+
+def _http_json(url, payload=None, timeout=8, key_env=None):
     data = json.dumps(payload).encode() if payload is not None else None
     req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-    key = os.environ.get("OPENAI_API_KEY")
-    if key and "/v1" in url:
+    key = os.environ.get(key_env) if key_env else None
+    if key:
         req.add_header("Authorization", f"Bearer {key}")
     with urllib.request.urlopen(req, timeout=timeout) as r:
         return json.loads(r.read().decode())
@@ -71,7 +81,8 @@ def _open_stream(cfg, path, payload):
     conn = cls(u.hostname, u.port or (443 if https else 80), timeout=600)
     _active_conn = conn
     headers = {"Content-Type": "application/json"}
-    key = os.environ.get("OPENAI_API_KEY")
+    key_env = cfg.get("key_env")
+    key = os.environ.get(key_env) if key_env else None
     if key and cfg["tipo"] != "ollama":
         headers["Authorization"] = f"Bearer {key}"
     conn.request("POST", path, body=json.dumps(payload).encode(),
@@ -92,7 +103,8 @@ def backend_status(backend="ollama"):
         if cfg["tipo"] == "ollama":
             _http_json(cfg["url"] + "/api/version", timeout=4)
         else:
-            _http_json(cfg["url"].rstrip("/") + "/models", timeout=4)
+            _http_json(cfg["url"].rstrip("/") + "/models", timeout=4,
+                       key_env=cfg.get("key_env"))
         return True
     except Exception:
         return False
@@ -104,7 +116,8 @@ def list_models(backend="ollama"):
         if cfg["tipo"] == "ollama":
             data = _http_json(cfg["url"] + "/api/tags", timeout=10)
             return [m.get("name") for m in data.get("models", []) if m.get("name")]
-        data = _http_json(cfg["url"].rstrip("/") + "/models", timeout=10)
+        data = _http_json(cfg["url"].rstrip("/") + "/models", timeout=10,
+                          key_env=cfg.get("key_env"))
         return [m.get("id") for m in data.get("data", []) if m.get("id")]
     except Exception:
         return []

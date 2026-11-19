@@ -287,8 +287,7 @@ class MainWindow(QMainWindow):
         backend = self.chat.cmb_backend.currentData()
         if backend:
             db.set_cfg("ultimo_backend", backend)
-        if backend == "openai":
-            self._config_openai()
+        self._config_backend(backend)
         prev = db.get_cfg("ultimo_modelo")
         models = backends.list_models(backend)
         self.chat.cmb_model.blockSignals(True)
@@ -314,13 +313,18 @@ class MainWindow(QMainWindow):
             self.chat.cmb_model.setCurrentText(models[0])
         self._restaurar_root()
 
-    def _config_openai(self):
-        """Carga la clave OpenAI guardada en Ajustes (sin preguntar)."""
-        if os.environ.get("OPENAI_API_KEY"):
+    def _config_backend(self, backend):
+        """Carga la clave del motor guardada en Ajustes (sin preguntar)."""
+        cfg = backends.BACKENDS.get(backend, {})
+        env_name = cfg.get("key_env")
+        if not env_name or os.environ.get(env_name):
             return
-        key = db.get_cfg("openai_key")
+        key = db.get_cfg("apikey:" + backend) or (
+            db.get_cfg("openai_key") if backend == "openai" else None)
         if key:
-            backends.configure_openai(key, db.get_cfg("openai_base"))
+            base = db.get_cfg("openai_base") if backend == "openai" \
+                else None
+            backends.configure_backend(backend, key, base)
 
     def _restaurar_root(self):
         """Al arrancar vuelve al último proyecto trabajado."""

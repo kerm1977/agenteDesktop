@@ -100,14 +100,17 @@ class AjustesDialog(QDialog):
 
         self._api_base = QLineEdit(
             db.get_cfg("openai_base", "https://api.openai.com/v1"))
-        self._api_base.setToolTip(
-            "OpenAI, Groq (https://api.groq.com/openai/v1) "
-            "u OpenRouter (https://openrouter.ai/api/v1)")
         form.addRow("API base (OpenAI):", self._api_base)
-        self._api_key = QLineEdit(db.get_cfg("openai_key", ""))
-        self._api_key.setEchoMode(QLineEdit.Password)
-        self._api_key.setPlaceholderText("sk-...")
-        form.addRow("API key:", self._api_key)
+        self._api_keys = {}
+        for b, hint in (("openai", "sk-..."), ("groq", "gsk_..."),
+                        ("gemini", "AIza..."), ("openrouter", "sk-or-...")):
+            w = QLineEdit(db.get_cfg("apikey:" + b) or
+                          (db.get_cfg("openai_key") if b == "openai"
+                           else ""))
+            w.setEchoMode(QLineEdit.Password)
+            w.setPlaceholderText(hint)
+            form.addRow(f"API key {b}:", w)
+            self._api_keys[b] = w
 
         lay.addLayout(form)
         self._auto = QCheckBox("Auto-ajustar velocidad (reduce contexto "
@@ -219,7 +222,10 @@ class AjustesDialog(QDialog):
                    ("resumida", "media", "explicativa")[
                        self._detalle.currentIndex()])
         db.set_cfg("openai_base", self._api_base.text().strip())
-        db.set_cfg("openai_key", self._api_key.text().strip())
-        backends.configure_openai(self._api_key.text().strip(),
-                                  self._api_base.text().strip())
+        for b, w in self._api_keys.items():
+            k = w.text().strip()
+            db.set_cfg("apikey:" + b, k)
+            backends.configure_backend(
+                b, k,
+                self._api_base.text().strip() if b == "openai" else None)
         self.accept()
