@@ -120,7 +120,12 @@ class MainWindow(QMainWindow):
 
     def _ajustes(self):
         model = self.chat.cmb_model.currentText()
-        if model and not model.startswith("("):
+        if model.startswith("("):   # (Automático): ajusta el 1.º real
+            model = next((self.chat.cmb_model.itemText(i)
+                          for i in range(self.chat.cmb_model.count())
+                          if not self.chat.cmb_model.itemText(i)
+                          .startswith("(")), "")
+        if model:
             AjustesDialog(model, self).exec()
             consola.log_info("ui", "rendimiento ajustado para " + model)
 
