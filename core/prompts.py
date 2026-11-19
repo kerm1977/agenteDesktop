@@ -44,7 +44,9 @@ SYSTEM_SELF = ("\n\nMODO MEJORAR AGENTE: trabajas ÚNICAMENTE sobre el código "
 
 
 DETALLE = {
-    "resumida":   "Responde CORTO: lo mínimo necesario, sin relleno.",
+    "resumida":   "Responde en MÁXIMO 2-3 líneas: solo la respuesta "
+                  "directa. Nada de listas, pasos, ejemplos ni "
+                  "explicaciones.",
     "media":      "Responde con longitud normal, directo al punto.",
     "explicativa": "Responde con DETALLE completo: explica el porqué, "
                    "pasos, alternativas y ejemplos.",

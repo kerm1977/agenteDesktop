@@ -489,9 +489,10 @@ class MainWindow(QMainWindow):
         self._last_text = text
         self.chat.add_user(text or "(adjuntos)")
         self.models.save_prefs(model)
+        nivel = db.get_cfg("detalle:" + model, "media")
         system = prompts.build_system(
             self.editor.context(), self._root, self._self_mode,
-            detalle=db.get_cfg("detalle:" + model, "media"))
+            detalle=nivel)
         historial = [m for m in self._messages
                      if m["role"] != "system"][-8:]
         self._messages = ([{"role": "system", "content": system}]
@@ -502,6 +503,11 @@ class MainWindow(QMainWindow):
         self._messages.append({"role": "user", "content": msg})
         options = {k: v for k, v in db.get_model_prefs(model).items()
                    if k in ("num_ctx", "num_predict", "temperature")}
+        caps = {"resumida": 160, "media": 700}   # el modelo no se pasa
+        if nivel in caps:
+            cur = options.get("num_predict")
+            if cur is None or int(cur) <= 0 or int(cur) > caps[nivel]:
+                options["num_predict"] = caps[nivel]
         options["num_thread"] = int(db.get_cfg(
             "num_thread", os.cpu_count() or 4))
         self.chat.start_stream()
