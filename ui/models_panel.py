@@ -156,6 +156,8 @@ class ModelRow(QFrame):
 
 
 class ModelsPanel(QWidget):
+    installed = Signal(str)   # tag instalado con éxito
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setStyleSheet(CSS)
@@ -277,6 +279,7 @@ class ModelsPanel(QWidget):
         if code == 0:
             row.set_installed()
             self.refresh()
+            self.installed.emit(tag)
         elif code == -1:
             row.bar.setVisible(False)
             row.bar.setValue(0)

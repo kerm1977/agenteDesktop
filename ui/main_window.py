@@ -144,6 +144,10 @@ class MainWindow(QMainWindow):
         self.chat.send_requested.connect(self._send)
         self.chat.stop_requested.connect(self._stop)
         self.chat.attach_requested.connect(self._attach)
+        self.models.installed.connect(
+            lambda _tag: (self._load_models(),
+                          self.chat.add_system(
+                              "Modelo instalado — ya está en el selector.")))
         self.chat.cmb_model.currentTextChanged.connect(
             self.models._select_model)
         self.chat.cmb_model.currentTextChanged.connect(self._model_rule)
