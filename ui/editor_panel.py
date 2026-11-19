@@ -66,7 +66,7 @@ class CodeEditor(QPlainTextEdit):
         font = QFont("Consolas", 10)
         font.setStyleHint(QFont.Monospace)
         self.setFont(font)
-        self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 4)
+        self.setTabStopDistance(self.fontMetrics().horizontalAdvance(" ") * 5)
         self.setStyleSheet("QPlainTextEdit{background:#242429;color:#dcdce2;"
                            "border:none;}")
         self.blockCountChanged.connect(self._update_line_area_width)
@@ -175,7 +175,7 @@ class CodeEditor(QPlainTextEdit):
                 self._multi_insert("\n")
                 return
             if event.key() == Qt.Key_Tab:
-                self._multi_insert("    ")
+                self._multi_insert("     ")
                 return
             if event.key() == Qt.Key_Backspace:
                 self._multi_delete(back=True)
@@ -186,8 +186,29 @@ class CodeEditor(QPlainTextEdit):
             self._extra = []
             self.setExtraSelections([])
         if event.key() == Qt.Key_Tab:
-            self.textCursor().insertText("    ")
+            self.textCursor().insertText("     ")
             return
+        if event.key() in (Qt.Key_Return, Qt.Key_Enter):
+            # auto-indent estilo Sublime: 5 espacios por nivel
+            cur = self.textCursor()
+            bloque = cur.block().text()
+            pos = cur.positionInBlock()
+            antes = bloque[:pos]
+            indent = re.match(r"\s*", bloque).group(0)
+            extra = ""
+            if (re.search(r"[:{\[(]\s*$", antes)
+                    or re.search(r"<[^/!][^>]*[^/]>\s*$", antes)):
+                extra = " " * 5
+            cur.insertText("\n" + indent + extra)
+            return
+        if event.key() == Qt.Key_Backspace:
+            # dedent: si solo hay espacios a la izquierda, quita un nivel
+            cur = self.textCursor()
+            pos = cur.positionInBlock()
+            if pos and cur.block().text()[:pos].strip() == "":
+                for _ in range(min(5, pos)):
+                    cur.deletePreviousChar()
+                return
         super().keyPressEvent(event)
 
     def load_file(self, path):

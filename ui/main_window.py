@@ -647,7 +647,7 @@ class MainWindow(QMainWindow):
             nom)[0].strip()
         return nom or None
 
-    def _crear_web(self, text):
+    def _crear_web(self, text, es_proyecto=False):
         """Genera una página web real sin CDN: carpeta + index.html + MD."""
         nombre = (self._nombre(text) or "mi-web").replace(" ", "-")
         base = os.path.join(self._donde(text.lower()), nombre)
@@ -677,10 +677,20 @@ class MainWindow(QMainWindow):
                     "- `index.html`: página principal (sin CDNs, todo "
                     "local).\n"
                     f"- Puerto OTA asignado: {puerto}\n")
-        return self._ejecutar(
-            text, "crear página web", "@OPEN:" + base,
-            "Página creada en: " + index
-            + "\n(ábrela doble-clic o en el editor)")
+        r = self._ejecutar(
+            text, "crear proyecto" if es_proyecto else "crear página web",
+            "@OPEN:" + base,
+            ("Proyecto creado en: " if es_proyecto else "Página creada en: ")
+            + index + "\n(ábrela doble-clic o en el editor)")
+        if es_proyecto:
+            # cada proyecto nuevo abre un agente/conversación nueva
+            self._guardar_conversacion()
+            self._limpiar_agente()
+            self.chat.add_system(
+                f"Proyecto '{nombre}' creado en {base} — "
+                "conversación nueva. Las normas guardadas ya están "
+                "aplicadas (sin CDNs, <250 líneas, .md incluido).")
+        return r
 
     def _ejecutar(self, text, titulo, detalle, ok_msg):
         """Muestra la acción como tarjeta + respuesta, y abre raíz si aplica."""
@@ -767,11 +777,12 @@ class MainWindow(QMainWindow):
                                  "Eliminado: " + dest)
             return False   # borrar sin nombre claro -> que pregunte el modelo
         # "crea página/sitio/app/proyecto" -> plantilla real al instante
+        es_proyecto = bool(re.search(r"proyecto", t))
         if crear and re.search(
                 r"single.?page|simple.?page|p[aá]gina|index|sitio|"
                 r"web ?app|web|html|aplicaci[oó]n|app|proyecto|juego|"
                 r"programa", t):
-            return self._crear_web(text)
+            return self._crear_web(text, es_proyecto)
         m = re.search(r"https?://\S*github\S*", text, re.I)
         if m and re.search(r"clon|repo|github|agrega", t):
             return self._run(text, "clone_repo", {"url": m.group(0).rstrip('.,)')},
