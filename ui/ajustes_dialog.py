@@ -98,46 +98,11 @@ class AjustesDialog(QDialog):
             {"resumida": 0, "media": 1, "explicativa": 2}.get(nivel, 1))
         form.addRow("Detalle de respuesta:", self._detalle)
 
-        enlaces = QLabel(
-            "API keys gratis — regístrate y copia tu clave:<br>"
-            "· Groq: <a href='https://console.groq.com/keys'>"
-            "console.groq.com/keys</a><br>"
-            "· Gemini: <a href='https://aistudio.google.com/app/apikey'>"
-            "aistudio.google.com/app/apikey</a><br>"
-            "· OpenRouter: <a href='https://openrouter.ai/keys'>"
-            "openrouter.ai/keys</a><br>"
-            "· GitHub Models: <a href='https://github.com/settings/tokens'>"
-            "github.com/settings/tokens</a> (token clásico)<br>"
-            "· Together: <a href='https://api.together.xyz/settings/api-keys'>"
-            "api.together.xyz/settings/api-keys</a><br>"
-            "· Cerebras: <a href='https://cloud.cerebras.ai/'>"
-            "cloud.cerebras.ai</a>")
-        enlaces.setOpenExternalLinks(True)
-        enlaces.setWordWrap(True)
-        enlaces.setStyleSheet("color:#8ab4f8;padding:4px 0;")
-        form.addRow(enlaces)
-        form.addRow(QLabel("API keys de motores gratuitos:"))
-        self._api_keys = {}
-        for b, hint in (("groq", "gsk_..."), ("gemini", "AIza..."),
-                        ("openrouter", "sk-or-..."),
-                        ("github", "github_pat_..."),
-                        ("together", "..."), ("cerebras", "csk-...")):
-            w = QLineEdit(db.get_cfg("apikey:" + b) or "")
-            w.setEchoMode(QLineEdit.Password)
-            w.setPlaceholderText(hint)
-            form.addRow(f"API key {b}:", w)
-            self._api_keys[b] = w
-
         lay.addLayout(form)
         self._auto = QCheckBox("Auto-ajustar velocidad (reduce contexto "
                                "y respuesta si el modelo va lento)")
         self._auto.setChecked(db.get_cfg("auto_tune", "1") == "1")
         lay.addWidget(self._auto)
-        self._dinamico = QCheckBox(
-            "Inteligencia dinámica: elegir el mejor modelo instalado "
-            "según cada pregunta (rápido para simple, coder para código)")
-        self._dinamico.setChecked(db.get_cfg("dinamico", "1") == "1")
-        lay.addWidget(self._dinamico)
 
         lay.addWidget(QLabel(
             "Más contexto/tokens = respuestas más largas pero más lentas.\n"
@@ -233,10 +198,76 @@ class AjustesDialog(QDialog):
         db.set_cfg("num_thread", self._threads.value())
         db.set_cfg("num_gpu", self._gpu.value())
         db.set_cfg("auto_tune", "1" if self._auto.isChecked() else "0")
-        db.set_cfg("dinamico", "1" if self._dinamico.isChecked() else "0")
         db.set_cfg("detalle:" + self._model,
                    ("resumida", "media", "explicativa")[
                        self._detalle.currentIndex()])
+        self.accept()
+
+
+class AjustesAgenteDialog(QDialog):
+    """Ajustes del agente: orquestación, intérprete y API keys gratis."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Ajustes del agente")
+        self.setMinimumWidth(400)
+        lay = QVBoxLayout(self)
+        form = QFormLayout()
+        form.setLabelAlignment(Qt.AlignRight)
+
+        self._interprete = QCheckBox(
+            "Intérprete: un modelo rápido traduce tu intención antes "
+            "de responder")
+        self._interprete.setChecked(db.get_cfg("interprete", "1") == "1")
+        lay.addWidget(self._interprete)
+        self._dinamico = QCheckBox(
+            "Inteligencia dinámica: el mejor modelo por pregunta "
+            "(orquestador Gemini -> generalista local -> heurística)")
+        self._dinamico.setChecked(db.get_cfg("dinamico", "1") == "1")
+        lay.addWidget(self._dinamico)
+
+        enlaces = QLabel(
+            "API keys gratis — regístrate y copia tu clave:<br>"
+            "· Groq: <a href='https://console.groq.com/keys'>"
+            "console.groq.com/keys</a><br>"
+            "· Gemini: <a href='https://aistudio.google.com/app/apikey'>"
+            "aistudio.google.com/app/apikey</a><br>"
+            "· OpenRouter: <a href='https://openrouter.ai/keys'>"
+            "openrouter.ai/keys</a><br>"
+            "· GitHub Models: <a href='https://github.com/settings/tokens'>"
+            "github.com/settings/tokens</a> (token clásico)<br>"
+            "· Together: <a href='https://api.together.xyz/settings/api-keys'>"
+            "api.together.xyz/settings/api-keys</a><br>"
+            "· Cerebras: <a href='https://cloud.cerebras.ai/'>"
+            "cloud.cerebras.ai</a>")
+        enlaces.setOpenExternalLinks(True)
+        enlaces.setWordWrap(True)
+        enlaces.setStyleSheet("color:#8ab4f8;padding:4px 0;")
+        form.addRow(enlaces)
+        form.addRow(QLabel("API keys de motores gratuitos:"))
+        self._api_keys = {}
+        for b, hint in (("groq", "gsk_..."), ("gemini", "AIza..."),
+                        ("openrouter", "sk-or-..."),
+                        ("github", "github_pat_..."),
+                        ("together", "..."), ("cerebras", "csk-...")):
+            w = QLineEdit(db.get_cfg("apikey:" + b) or "")
+            w.setEchoMode(QLineEdit.Password)
+            w.setPlaceholderText(hint)
+            form.addRow(f"API key {b}:", w)
+            self._api_keys[b] = w
+
+        lay.addLayout(form)
+        btns = QDialogButtonBox(QDialogButtonBox.Save
+                                | QDialogButtonBox.Cancel)
+        btns.accepted.connect(self._save)
+        btns.rejected.connect(self.reject)
+        lay.addWidget(btns)
+
+    def _save(self):
+        db.set_cfg("interprete",
+                   "1" if self._interprete.isChecked() else "0")
+        db.set_cfg("dinamico",
+                   "1" if self._dinamico.isChecked() else "0")
         for b, w in self._api_keys.items():
             k = w.text().strip()
             db.set_cfg("apikey:" + b, k)

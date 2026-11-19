@@ -13,7 +13,7 @@ from ui import barras, ota_ui
 from ui.chat_panel import ChatPanel
 from ui.console_panel import ConsolePanel
 from ui.editor_panel import EditorPanel
-from ui.ajustes_dialog import AjustesDialog
+from ui.ajustes_dialog import AjustesAgenteDialog, AjustesDialog
 from ui.equipo_dialog import EquipoDialog
 from ui.models_panel import ModelsPanel
 from ui.nuevo_proyecto import NuevoProyectoDialog, crear_proyecto
@@ -118,6 +118,10 @@ class MainWindow(QMainWindow):
 
     def _scan_hw(self):
         self._equipo_info()
+
+    def _ajustes_agente(self):
+        AjustesAgenteDialog(self).exec()
+        consola.log_info("ui", "ajustes del agente guardados")
 
     def _ajustes(self):
         model = self.chat.cmb_model.currentText()
@@ -836,8 +840,11 @@ class MainWindow(QMainWindow):
             lambda t, k=ck: (db.set_cached(k, t), self._chat_done(t)))
         self._worker.failed.connect(self._chat_failed)
         self._worker.stat.connect(self.chat.add_rule)
-        self._worker.perf.connect(lambda dt, ntok, m=model:
-                                  self._auto_tune(m, dt, ntok))
+        self._worker.perf.connect(lambda dt, ntok, m=model: (
+            db.set_cfg("ultimo_perf",
+                       f"{m} · {dt:.1f} s · {ntok} tokens · "
+                       f"{ntok / dt:.1f} tok/s" if dt else ""),
+            self._auto_tune(m, dt, ntok)))
         self._worker.open_dir.connect(self.set_root)
         self._worker.start()
 
