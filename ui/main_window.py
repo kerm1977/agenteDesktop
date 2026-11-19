@@ -315,27 +315,12 @@ class MainWindow(QMainWindow):
         self._restaurar_root()
 
     def _config_openai(self):
-        """Pide/guarda la clave y URL de la API compatible OpenAI."""
+        """Carga la clave OpenAI guardada en Ajustes (sin preguntar)."""
         if os.environ.get("OPENAI_API_KEY"):
             return
         key = db.get_cfg("openai_key")
         if key:
             backends.configure_openai(key, db.get_cfg("openai_base"))
-            return
-        base, ok = QInputDialog.getText(
-            self, "API OpenAI",
-            "URL base (OpenAI, Groq u OpenRouter):",
-            text="https://api.openai.com/v1")
-        if not ok:
-            return
-        key, ok = QInputDialog.getText(
-            self, "API OpenAI", "API key:", QLineEdit.Password)
-        if not ok or not key.strip():
-            return
-        db.set_cfg("openai_base", base.strip())
-        db.set_cfg("openai_key", key.strip())
-        backends.configure_openai(key.strip(), base.strip())
-        self.chat.add_system("API OpenAI configurada.")
 
     def _restaurar_root(self):
         """Al arrancar vuelve al último proyecto trabajado."""

@@ -4,7 +4,8 @@ import os
 from PySide6.QtCore import Qt, QThread, Signal
 from PySide6.QtWidgets import (QCheckBox, QComboBox, QDialog,
                                QDialogButtonBox, QFormLayout, QLabel,
-                               QPushButton, QSpinBox, QVBoxLayout)
+                               QLineEdit, QPushButton, QSpinBox,
+                               QVBoxLayout)
 
 from core import backends, bench, db
 
@@ -89,6 +90,17 @@ class AjustesDialog(QDialog):
         self._detalle.setCurrentIndex(
             {"resumida": 0, "media": 1, "explicativa": 2}.get(nivel, 1))
         form.addRow("Detalle de respuesta:", self._detalle)
+
+        self._api_base = QLineEdit(
+            db.get_cfg("openai_base", "https://api.openai.com/v1"))
+        self._api_base.setToolTip(
+            "OpenAI, Groq (https://api.groq.com/openai/v1) "
+            "u OpenRouter (https://openrouter.ai/api/v1)")
+        form.addRow("API base (OpenAI):", self._api_base)
+        self._api_key = QLineEdit(db.get_cfg("openai_key", ""))
+        self._api_key.setEchoMode(QLineEdit.Password)
+        self._api_key.setPlaceholderText("sk-...")
+        form.addRow("API key:", self._api_key)
 
         lay.addLayout(form)
         self._auto = QCheckBox("Auto-ajustar velocidad (reduce contexto "
@@ -198,4 +210,8 @@ class AjustesDialog(QDialog):
         db.set_cfg("detalle:" + self._model,
                    ("resumida", "media", "explicativa")[
                        self._detalle.currentIndex()])
+        db.set_cfg("openai_base", self._api_base.text().strip())
+        db.set_cfg("openai_key", self._api_key.text().strip())
+        backends.configure_openai(self._api_key.text().strip(),
+                                  self._api_base.text().strip())
         self.accept()
