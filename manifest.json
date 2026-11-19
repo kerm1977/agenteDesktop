@@ -1,5 +1,5 @@
 {
- "version": "0.5.6",
+ "version": "0.5.7",
  "files": {
   ".gitignore": "4f6ad4d1f3d6d41a7a4fe4f8b336f9581156e6506c262154abde816faeab6005",
   "app.py": "c67ddceba1c9bba1b6e7f06c9c1c8866a73247ab8106ec93c7fa74b7ee0b708c",
@@ -7,7 +7,7 @@
   "REGLAS.md": "1fa105eb47eed4663562dd76f0c0c9083b332b2d5be831996a211547448581a5",
   "requirements.txt": "8728f56a285910a461cfd3a17d03b9045f3b4fa695b35348108db21f067b9c57",
   "run.bat": "c03949d031b97904658d83b6544b0f8ba89aae95a6b52f465bd39c355374ee87",
-  "version.json": "71859fdf2de8a1862795b00ae9215d54f3157bb7767b08cc31c2375a0f1ff45f",
+  "version.json": "4f98c46031da75189fe642cb09d14ae8161d35864239803af3caa9d5bcec00b6",
   "_manifest.json": "1f5102bd1f5b26eb62955879acc8353b3d6d70e61a76f70758c66336813b29ff",
   "core/backends.py": "32608a06cadc3a6e014b6e1f75cc6a818f3d7a7139fc553b3d6d82c6042968ee",
   "core/bench.py": "45e590ab0e46a976a48b4f6bf5f6bbbee1e0a5ed5d42853351190edd04b1d72a",
@@ -18,7 +18,7 @@
   "core/memoria.py": "2629e692a5de1e1c5bb06e46bd8ee03bfc17b7569943a4515bd55b9457f3edeb",
   "core/ollama.py": "da5b80d55cba8af403aeeead6270b0c79abffdd8ad383eb30eade257f0a2a557",
   "core/ota.py": "9c0ff73dfc49a26d620a1d43f4f6a5b6cd5bc59f0453b1d8ca24809dc3faff5c",
-  "core/prompts.py": "f62dcff86a0901e56939ca4732fe93605f19adcbe051744e9d96bc2073a31fda",
+  "core/prompts.py": "35454eacb8c1e96b740324b8942f72faefc077bf59af83f641eeb44e677aef0b",
   "core/tools.py": "2ddaef7aca838e412cdb643f3d71a0dab158ea50dcd67130d42066298def2a83",
   "core/updater.py": "99269edb98de85aab626415d3af868213149f353a11a74d8b491508888b48478",
   "core/voz.py": "becdc853c7eedf5c60bab821890a9d54ac9549746a85fb079e43c31a3e75f097",
