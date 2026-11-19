@@ -570,7 +570,8 @@ class MainWindow(QMainWindow):
                     return b[1] if b and b[1] else 99999
                 interprete = min(candidatos, key=_vel)
         self._worker = ChatWorker(backend, model, self._messages, self._root,
-                                  options=options, interpreter=interprete)
+                                  options=options, interpreter=interprete,
+                                  corte=(nivel == "resumida"))
         self._worker.token.connect(self.chat.append_token)
         self._worker.card.connect(self.chat.add_card)
         self._worker.finished_text.connect(self._chat_done)

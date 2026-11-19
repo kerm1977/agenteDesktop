@@ -32,14 +32,15 @@ class ChatWorker(QThread):
     open_dir = Signal(str)      # carpeta a abrir como raíz
 
     def __init__(self, backend, model, messages, root, options=None,
-                 interpreter=None):
+                 interpreter=None, corte=False):
         super().__init__()
         self._backend = backend
         self._model = model
-        self._messages = list(messages)
+        self._messages = [dict(m) for m in messages]
         self._root = root
         self._options = options or {}
         self._interpreter = interpreter
+        self._corte = corte
         self._stop = False
         self._rounds_max = 8
 
@@ -78,6 +79,11 @@ class ChatWorker(QThread):
         except Exception as e:
             consola.log_error("interprete", repr(e))
             return
+        if texto:
+            # deduplica líneas repetidas y limita a 2 (evita bucles)
+            lins = [l.strip() for l in texto.splitlines() if l.strip()]
+            lins = list(dict.fromkeys(lins))[:2]
+            texto = " ".join(lins)[:300]
         if texto:
             consola.log_info("interprete", texto[:120])
             self.card.emit("Intérprete → " + self._interpreter, texto)
@@ -146,7 +152,15 @@ class ChatWorker(QThread):
             f" · {vel:.1f} tok/s"
             + (f" · primer token {first - t0:.1f} s" if first else ""))
         self.perf.emit(dt, ntok)
-        self.finished_text.emit(full_reply.strip())
+        self.finished_text.emit(self._recortar(full_reply.strip()))
+
+    def _recortar(self, texto):
+        """Si el nivel es resumida, cierra en fin de frase, no a mitad."""
+        if not self._corte or "```" in texto:
+            return texto
+        fin = max(texto.rfind(". "), texto.rfind(".\n"),
+                  texto.rfind("!"), texto.rfind("?"))
+        return texto[:fin + 1] if fin > 0 else texto
 
     def _run_call(self, call):
         try:
